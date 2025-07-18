@@ -1,0 +1,46 @@
+project_rules:
+  - name: "Backend in /backend (FastAPI, Python)"
+    paths: ["backend/**"]
+    language: "python"
+    description: "All backend code, including API, services, models, and orchestration."
+  - name: "Frontend in /frontend/src (Vite, React, shadcn/ui, Tailwind, React Router)"
+    paths: ["frontend/src/**"]
+    language: "typescript"
+    description: "All frontend code, including React components, shadcn/ui, Tailwind CSS, and React Router DOM."
+  - name: "Frontend config and build files"
+    paths: ["frontend/package.json", "frontend/vite.config.ts", "frontend/tailwind.config.ts", "frontend/postcss.config.js", "frontend/tsconfig*.json", "frontend/index.html"]
+    language: "json"
+    description: "Frontend configuration, build, and entry files."
+  - name: "Database Migrations in /migrations"
+    paths: ["migrations/**"]
+    language: "sql"
+    description: "Database migration scripts for PostgreSQL."
+  - name: "Shared Docs & Configs"
+    paths: ["docs/**", "*.md", "*.env", "*.yaml", "*.yml"]
+    language: "markdown"
+    description: "Documentation, environment files, and configuration."
+  - name: "Tests in /tests"
+    paths: ["tests/**"]
+    language: "python"
+    description: "All backend and integration tests."
+
+ignore:
+  - "node_modules/**"
+  - "__pycache__/**"
+  - ".venv/**"
+  - ".DS_Store"
+  - "dist/**"
+  - "build/**"
+  - "*.pyc"
+  - "*.log"
+  - "frontend/.next/**"
+  - "frontend/.turbo/**"
+  - "frontend/.vercel/**"
+  - "backend/.mypy_cache/**"
+  - "backend/.pytest_cache/**"
+  - "backend/.coverage"
+  - "backend/.env"
+  - "backend/.DS_Store"
+  - "**/.git/**"
+  - "**/.idea/**"
+  - "**/.vscode/**" 
