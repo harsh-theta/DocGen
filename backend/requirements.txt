@@ -8,3 +8,11 @@ passlib[bcrypt]
 pydantic
 python-multipart
 supabase
+python-docx
+html2text
+playwright
+beautifulsoup4
+bleach
+psutil
+pytest
+pytest-asyncio

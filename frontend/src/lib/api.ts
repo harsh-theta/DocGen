@@ -32,10 +32,11 @@ export async function register(username: string, password: string) {
 
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
   const token = localStorage.getItem("token");
-  const headers = {
-    ...(options.headers || {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
+  const headers = new Headers(options.headers || {});
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  
   const response = await fetch(`${API_BASE_URL}${url}`, {
     ...options,
     headers,

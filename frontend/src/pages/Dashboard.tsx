@@ -57,11 +57,24 @@ const Dashboard = () => {
         body: formData,
       });
       if (!response.ok) throw new Error("Upload failed");
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        throw new Error("Upload succeeded but response was not valid JSON");
+      }
       toast({ title: "Upload successful", description: `${file.name} uploaded.` });
+      setFile(null);
+      // Navigate to preview for the new document
+      if (data && typeof data.id === "string" && data.id.length > 0) {
+        navigate(`/preview?id=${data.id}`);
+      } else {
+        setError("Upload succeeded but no document ID was returned. Please refresh and try again.");
+        return;
+      }
       // Optionally refresh document list
       const docsRes = await fetchWithAuth("/documents");
       setDocuments(await docsRes.json());
-      setFile(null);
     } catch (err: any) {
       setError(err.message || "Upload failed");
     }
@@ -77,19 +90,57 @@ const Dashboard = () => {
       });
       return;
     }
-    await handleUpload();
+    
     setIsGenerating(true);
-    setTimeout(() => {
-      setIsGenerating(false);
-      navigate("/preview", {
-        state: {
-          documentTitle,
-          documentType,
-          prompt,
-          fileName: file.name,
-        },
+    setError("");
+    
+    try {
+      // Upload the file first
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetchWithAuth("/upload-doc", {
+        method: "POST",
+        body: formData,
       });
-    }, 2000);
+      
+      if (!response.ok) throw new Error("Upload failed");
+      
+      const data = await response.json();
+      
+      if (!data || !data.id) {
+        throw new Error("Upload succeeded but no document ID was returned");
+      }
+      
+      toast({ 
+        title: "Upload successful", 
+        description: `${file.name} uploaded. Opening preview...` 
+      });
+      
+      // Navigate to preview with the document ID
+      navigate(`/preview?id=${data.id}`);
+      
+      // Reset form
+      setFile(null);
+      setPrompt("");
+      setDocumentTitle("");
+      setDocumentType("");
+      
+      // Refresh document list
+      const docsRes = await fetchWithAuth("/documents");
+      if (docsRes.ok) {
+        setDocuments(await docsRes.json());
+      }
+      
+    } catch (err: any) {
+      setError(err.message || "Upload failed");
+      toast({
+        title: "Upload failed",
+        description: err.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleLogout = () => {
@@ -142,7 +193,7 @@ const Dashboard = () => {
                       type="file"
                       onChange={handleFileUpload}
                       className="hidden"
-                      accept=".pdf,.doc,.docx,.txt"
+                      accept=".pdf,.doc,.docx"
                     />
                     <label htmlFor="file" className="cursor-pointer">
                       <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
@@ -150,7 +201,7 @@ const Dashboard = () => {
                         {file ? file.name : "Click to upload or drag and drop"}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        PDF, DOC, DOCX, TXT (Max 10MB)
+                        PDF, DOC, DOCX (Max 10MB)
                       </p>
                     </label>
                   </div>
