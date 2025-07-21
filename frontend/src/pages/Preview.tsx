@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { fetchWithAuth } from "@/lib/api";
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 const Preview = () => {
   const location = useLocation();
@@ -582,6 +583,53 @@ const Preview = () => {
           </div>
         </div>
       </main>
+      {docMeta && (docMeta.html_template || docMeta.ai_generation_metadata || docMeta.generated_sections) && (
+  <div className="mt-8">
+    <Accordion type="single" collapsible>
+      <AccordionItem value="ai-fields">
+        <AccordionTrigger>Show AI Generation Details</AccordionTrigger>
+        <AccordionContent>
+          {/* Original HTML Template */}
+          {docMeta.html_template && (
+            <div className="mb-4">
+              <h4 className="font-semibold mb-1">Original HTML Template</h4>
+              <pre className="bg-muted p-2 rounded text-xs overflow-x-auto max-h-48">{docMeta.html_template}</pre>
+              <Button size="sm" onClick={() => navigator.clipboard.writeText(docMeta.html_template)} className="mt-1">Copy</Button>
+            </div>
+          )}
+          {/* AI Generation Metadata */}
+          {docMeta.ai_generation_metadata && (
+            <div className="mb-4">
+              <h4 className="font-semibold mb-1">AI Generation Metadata</h4>
+              <pre className="bg-muted p-2 rounded text-xs overflow-x-auto max-h-48">{JSON.stringify(
+                typeof docMeta.ai_generation_metadata === "string"
+                  ? JSON.parse(docMeta.ai_generation_metadata)
+                  : docMeta.ai_generation_metadata,
+                null,
+                2
+              )}</pre>
+              <Button size="sm" onClick={() => navigator.clipboard.writeText(docMeta.ai_generation_metadata)} className="mt-1">Copy</Button>
+            </div>
+          )}
+          {/* Per-section Results */}
+          {docMeta.generated_sections && (
+            <div className="mb-4">
+              <h4 className="font-semibold mb-1">Per-section Results</h4>
+              <pre className="bg-muted p-2 rounded text-xs overflow-x-auto max-h-48">{JSON.stringify(
+                typeof docMeta.generated_sections === "string"
+                  ? JSON.parse(docMeta.generated_sections)
+                  : docMeta.generated_sections,
+                null,
+                2
+              )}</pre>
+              <Button size="sm" onClick={() => navigator.clipboard.writeText(docMeta.generated_sections)} className="mt-1">Copy</Button>
+            </div>
+          )}
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  </div>
+)}
     </div>
   );
 };

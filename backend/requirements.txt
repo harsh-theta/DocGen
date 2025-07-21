@@ -16,3 +16,8 @@ bleach
 psutil
 pytest
 pytest-asyncio
+# AI and LangGraph dependencies
+langgraph>=0.0.40
+langchain-google-genai>=1.0.0
+langchain-core>=0.1.0
+tenacity>=8.0.0

@@ -19,6 +19,13 @@ class Settings(BaseSettings):
     # Rate limiting for PDF exports (requests per minute per user)
     PDF_EXPORT_RATE_LIMIT: int = 10
 
+    # AI Configuration
+    GEMINI_API_KEY: str = "AIzaSyAHK_B3M7P-lfPx_z2sF0AtiPUQLkTQP-o"
+    AI_GENERATION_TIMEOUT: int = 300
+    MAX_SECTIONS_PER_DOCUMENT: int = 50
+    ENABLE_CONTENT_VALIDATION: bool = True
+    DEFAULT_GENERATION_MODEL: str = "gemini-2.5-flash"
+
     class Config:
         env_file = ".env"
 

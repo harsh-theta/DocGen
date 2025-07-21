@@ -1,0 +1,23 @@
+{
+  "pdf_generation": {
+    "count": 2,
+    "success_count": 2,
+    "failure_count": 0,
+    "total_time_ms": 3208,
+    "avg_time_ms": 1604.0,
+    "max_time_ms": 1631,
+    "min_time_ms": 1577,
+    "total_size_bytes": 338372,
+    "avg_size_bytes": 169186.0,
+    "max_size_bytes": 175656
+  },
+  "errors": {
+    "count_by_type": {},
+    "recent_errors": []
+  },
+  "rate_limiting": {
+    "total_limited_requests": 0,
+    "limited_users": []
+  },
+  "last_updated": "2025-07-21T18:01:41.536476"
+}

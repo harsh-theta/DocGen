@@ -1,0 +1,1 @@
+# AI module for document generation using LangGraph and Gemini
