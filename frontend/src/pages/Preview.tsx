@@ -1,14 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FileText, Download, Eye, ArrowLeft, File, RefreshCw, AlertCircle } from "lucide-react";
+import { FileText, Download, Eye, ArrowLeft, File, RefreshCw, AlertCircle, Info, Save, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { fetchWithAuth } from "@/lib/api";
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { TiptapTableExtension, TableMenu } from "@/components/TiptapTableExtension";
+import { TiptapTableExtension, LazyTableMenu } from "@/components/LazyTiptapTableExtension";
+import ExportProgress from "@/components/ExportProgress";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { useDebouncedCallback } from "@/hooks/use-debounce";
+import KeyboardShortcutsHelp from "@/components/KeyboardShortcutsHelp";
 import "@/styles/tiptap-table.css";
 
 const Preview = () => {
@@ -24,12 +28,19 @@ const Preview = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [exportErrors, setExportErrors] = useState<{pdf?: string; docx?: string}>({});
   const [retryAttempts, setRetryAttempts] = useState<{pdf?: number; docx?: number}>({});
+  const [exportOperations, setExportOperations] = useState<{pdf?: string; docx?: string}>({});
+  const [showExportProgress, setShowExportProgress] = useState<{pdf?: boolean; docx?: boolean}>({});
   const errorTimeout = useRef<NodeJS.Timeout | null>(null);
 
+  // Initialize editor with auto-save functionality
   const editor = useEditor({
     extensions: [StarterKit, TiptapTableExtension],
     content: "",
     editable: true,
+    onUpdate: ({ editor }) => {
+      // Trigger auto-save when content changes
+      debouncedSave();
+    },
   });
 
   useEffect(() => {
@@ -118,6 +129,9 @@ const Preview = () => {
     setExportErrors((prev) => ({ ...prev, [format]: undefined }));
     setDownloading((prev) => ({ ...prev, [format]: true }));
     
+    // Show progress tracking UI
+    setShowExportProgress((prev) => ({ ...prev, [format]: true }));
+    
     const currentAttempt = (retryAttempts[format] || 0) + 1;
     const maxRetries = 3;
     
@@ -143,7 +157,7 @@ const Preview = () => {
       
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        const errorMessage = errorData.detail || errorData.message || `Export failed with status ${res.status}`;
+        const errorMessage = errorData.detail?.message || errorData.detail || errorData.message || `Export failed with status ${res.status}`;
         throw new Error(errorMessage);
       }
       
@@ -151,6 +165,11 @@ const Preview = () => {
       
       if (!data.url) {
         throw new Error("No file URL returned from server");
+      }
+
+      // Store operation ID for progress tracking if available
+      if (data.operation_id) {
+        setExportOperations((prev) => ({ ...prev, [format]: data.operation_id }));
       }
 
       // Validate that the URL is actually a PDF for PDF exports
@@ -274,8 +293,29 @@ const Preview = () => {
         }
       }
       
+      // Hide progress tracking UI after successful export
+      setTimeout(() => {
+        setShowExportProgress((prev) => ({ ...prev, [format]: false }));
+      }, 3000);
+      
     } catch (err: any) {
       console.error("Export error:", err);
+      
+      // Try to extract detailed error information
+      let errorDetail = err.message;
+      try {
+        // Check if the error message is JSON
+        if (typeof err.message === 'string' && err.message.startsWith('{')) {
+          const errorObj = JSON.parse(err.message);
+          if (errorObj.detail && errorObj.detail.user_message) {
+            errorDetail = errorObj.detail.user_message;
+          } else if (errorObj.detail && errorObj.detail.message) {
+            errorDetail = errorObj.detail.message;
+          }
+        }
+      } catch (e) {
+        // If parsing fails, use the original error message
+      }
       
       const specificError = getSpecificErrorMessage(err, format);
       setExportErrors((prev) => ({ ...prev, [format]: specificError }));
@@ -309,11 +349,14 @@ const Preview = () => {
           variant: "destructive",
         });
       }
+      
+      // Keep progress tracking UI visible for errors
     } finally {
       setDownloading((prev) => ({ ...prev, [format]: false }));
     }
   };
 
+  // Regular save function
   const handleSave = async () => {
     if (!docId || !editor) return;
     setSaving(true);
@@ -327,12 +370,46 @@ const Preview = () => {
       if (!res.ok) throw new Error("Failed to save edits");
       toast({ title: "Edits saved", description: "Your changes have been saved." });
       setSaveSuccess(true);
+      
+      // Show success state for 2 seconds
+      setTimeout(() => {
+        setSaveSuccess(false);
+      }, 2000);
     } catch (err: any) {
       toast({ title: "Save failed", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
   };
+  
+  // Debounced auto-save function
+  const debouncedSave = useDebouncedCallback(async () => {
+    if (!docId || !editor) return;
+    
+    try {
+      setSaving(true);
+      const res = await fetchWithAuth("/save-edits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: docId, content: editor.getHTML() }),
+      });
+      
+      if (!res.ok) throw new Error("Failed to auto-save");
+      
+      // Show subtle success indicator
+      setSaveSuccess(true);
+      
+      // Hide success indicator after 2 seconds
+      setTimeout(() => {
+        setSaveSuccess(false);
+      }, 2000);
+    } catch (err: any) {
+      console.error("Auto-save failed:", err);
+      // Don't show toast for auto-save failures to avoid disrupting the user
+    } finally {
+      setSaving(false);
+    }
+  }, 2000); // 2 second debounce delay
 
   const goBack = () => {
     navigate("/dashboard");
@@ -371,9 +448,30 @@ const Preview = () => {
             <h1 className="text-xl font-bold">DocGen</h1>
           </div>
           <div className="flex items-center space-x-2">
-            <Button onClick={handleSave} disabled={saving || !editor} className="flex items-center space-x-2">
-              {saving ? "Saving..." : saveSuccess ? "Saved" : "Save"}
+            <Button 
+              onClick={handleSave} 
+              disabled={saving || !editor} 
+              className="flex items-center space-x-2"
+              variant={saveSuccess ? "default" : "outline"}
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1" />
+                  <span>Saving...</span>
+                </>
+              ) : saveSuccess ? (
+                <>
+                  <Check className="h-4 w-4 mr-1 text-green-500" />
+                  <span>Saved</span>
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-1" />
+                  <span>Save</span>
+                </>
+              )}
             </Button>
+            <KeyboardShortcutsHelp />
             <Button 
               variant={exportErrors.pdf ? "destructive" : "outline"} 
               onClick={() => handleExport("pdf")} 
@@ -452,7 +550,7 @@ const Preview = () => {
                         </p>
                       </div>
                       <div className="max-w-none">
-                        <TableMenu editor={editor} />
+                        <LazyTableMenu editor={editor} />
                         <EditorContent 
                           editor={editor} 
                           className="tiptap-editor"
@@ -548,6 +646,22 @@ const Preview = () => {
                           )}
                         </div>
                       )}
+                      
+                      {/* Show export progress if available */}
+                      {showExportProgress.pdf && exportOperations.pdf && (
+                        <div className="mt-2">
+                          <ExportProgress 
+                            operationId={exportOperations.pdf}
+                            format="pdf"
+                            onComplete={(success) => {
+                              if (success) {
+                                setShowExportProgress((prev) => ({ ...prev, pdf: false }));
+                              }
+                            }}
+                            onRetry={() => handleExport("pdf", true)}
+                          />
+                        </div>
+                      )}
                     </div>
                     
                     <div className="space-y-2">
@@ -588,6 +702,22 @@ const Preview = () => {
                               Retry
                             </Button>
                           )}
+                        </div>
+                      )}
+                      
+                      {/* Show export progress if available */}
+                      {showExportProgress.docx && exportOperations.docx && (
+                        <div className="mt-2">
+                          <ExportProgress 
+                            operationId={exportOperations.docx}
+                            format="docx"
+                            onComplete={(success) => {
+                              if (success) {
+                                setShowExportProgress((prev) => ({ ...prev, docx: false }));
+                              }
+                            }}
+                            onRetry={() => handleExport("docx", true)}
+                          />
                         </div>
                       )}
                     </div>

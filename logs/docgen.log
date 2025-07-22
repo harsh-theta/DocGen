@@ -6683,3 +6683,324 @@ FROM documents
 WHERE documents.user_id = $1::INTEGER
 2025-07-22 11:15:21 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 49.99s ago] (1,)
 2025-07-22 11:15:21 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:35:07 - backend.core.logging_config - INFO - logging_config.py:105 - setup_logging - Logging configured - Level: INFO, File: logs/docgen.log
+2025-07-22 15:35:07 - backend.main - INFO - main.py:31 - on_startup - Starting DocGen API application...
+2025-07-22 15:35:07 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - select pg_catalog.version()
+2025-07-22 15:35:07 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [raw sql] ()
+2025-07-22 15:35:07 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - select current_schema()
+2025-07-22 15:35:07 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [raw sql] ()
+2025-07-22 15:35:07 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - show standard_conforming_strings
+2025-07-22 15:35:07 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [raw sql] ()
+2025-07-22 15:35:07 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:35:07 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = $1::VARCHAR AND pg_catalog.pg_class.relkind = ANY (ARRAY[$2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != $7::VARCHAR
+2025-07-22 15:35:07 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [generated in 0.00018s] ('users', 'r', 'p', 'f', 'v', 'm', 'pg_catalog')
+2025-07-22 15:35:07 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = $1::VARCHAR AND pg_catalog.pg_class.relkind = ANY (ARRAY[$2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != $7::VARCHAR
+2025-07-22 15:35:07 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 0.003657s ago] ('documents', 'r', 'p', 'f', 'v', 'm', 'pg_catalog')
+2025-07-22 15:35:07 - sqlalchemy.engine.Engine - INFO - base.py:2704 - _connection_commit_impl - COMMIT
+2025-07-22 15:35:07 - backend.main - INFO - main.py:37 - on_startup - Database tables created/verified successfully
+2025-07-22 15:35:07 - backend.main - INFO - main.py:48 - on_startup - Supabase client initialized successfully
+2025-07-22 15:35:07 - backend.main - INFO - main.py:61 - on_startup - Progress tracker initialized successfully
+2025-07-22 15:35:07 - backend.main - INFO - main.py:72 - on_startup - Rate limiter cleanup task started
+2025-07-22 15:35:07 - backend.main - INFO - main.py:77 - on_startup - DocGen API startup completed successfully
+2025-07-22 15:35:15 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:35:15 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:35:15 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [generated in 0.00017s] ('harsh1',)
+2025-07-22 15:35:15 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.user_id = $1::INTEGER
+2025-07-22 15:35:15 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [generated in 0.00012s] (1,)
+2025-07-22 15:35:15 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 0.5751s ago] ('harsh1',)
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.user_id = $1::INTEGER
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 0.572s ago] (1,)
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 0.7503s ago] ('harsh1',)
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.user_id = $1::INTEGER
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 0.7478s ago] (1,)
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 0.9417s ago] ('harsh1',)
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.user_id = $1::INTEGER
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 0.9385s ago] (1,)
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 1.124s ago] ('harsh1',)
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.user_id = $1::INTEGER
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 1.121s ago] (1,)
+2025-07-22 15:35:16 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 1.307s ago] ('harsh1',)
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.user_id = $1::INTEGER
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 1.304s ago] (1,)
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 1.495s ago] ('harsh1',)
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.user_id = $1::INTEGER
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 1.492s ago] (1,)
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 1.705s ago] ('harsh1',)
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.user_id = $1::INTEGER
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 1.702s ago] (1,)
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 1.886s ago] ('harsh1',)
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.user_id = $1::INTEGER
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 1.884s ago] (1,)
+2025-07-22 15:35:17 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:35:25 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:35:25 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:35:25 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 9.882s ago] ('harsh2',)
+2025-07-22 15:35:25 - passlib.handlers.bcrypt - WARNING - bcrypt.py:622 - _load_backend_mixin - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "/Users/harsh/Desktop/current_projects/DocGen/backend/.venv/lib/python3.12/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-07-22 15:35:25 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:35:25 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:35:25 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:35:25 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 10.19s ago] ('harsh2',)
+2025-07-22 15:35:25 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.user_id = $1::INTEGER
+2025-07-22 15:35:25 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 10.18s ago] (2,)
+2025-07-22 15:35:25 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:36:49 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:36:49 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:36:49 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 93.65s ago] ('harsh2',)
+2025-07-22 15:36:51 - httpx - INFO - _client.py:1025 - _send_single_request - HTTP Request: POST https://yvehddiznhpqaqbjdihu.supabase.co/storage/v1/object/documents/Qovai_-_AI-Based_Social_Media_Management_Platform_-_6_weeks_-_Updated__1__b3703124b1634d888664aa6cccb542ae.docx "HTTP/2 200 OK"
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - INSERT INTO documents (id, user_id, name, stored_filename, title, created_at, type, status, original_file_url, ai_content, final_file_url, parsed_structure, html_template) VALUES ($1::UUID, $2::INTEGER, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::TIMESTAMP WITHOUT TIME ZONE, $7::VARCHAR, $8::VARCHAR, $9::VARCHAR, $10::VARCHAR, $11::VARCHAR, $12::VARCHAR, $13::VARCHAR)
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [generated in 0.00032s] (UUID('6ed1332f-6147-4ea1-8b67-e058d08a83b8'), 2, 'Qovai - AI-Based Social Media Management Platform - 6 weeks - Updated (1).docx', 'Qovai_-_AI-Based_Social_Media_Management_Platform_-_6_weeks_-_Updated__1__b3703124b1634d888664aa6cccb542ae.docx', 'Qovai - AI-Based Social Media Management Platform - 6 weeks - Updated (1).docx', datetime.datetime(2025, 7, 22, 10, 6, 51, 500563), 'original', 'Uploaded', 'https://yvehddiznhpqaqbjdihu.supabase.co/storage/v1/object/public/documents/Qovai_-_AI-Based_Social_Media_Management_Platform_-_6_weeks_-_Updated__1__b3703124b1634d888664aa6cccb542ae.docx?', None, None, '<p>Qovai - AI-Based Social Media Management Platform</p>\n<h1>Timeline</h1>\n<p><b>Prepared by:</b> Theta Technolabs\n<b>Version:</b> 1.0\n<b>Client: ... (4281 characters truncated) ... Evaluation (types, sources, feasibility)</td><td>16</td></tr><tr><td>User Role Mapping</td><td>16</td></tr><tr><td>Total</td><td>45</td></tr></table>', None)
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:2704 - _connection_commit_impl - COMMIT
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.id = $1::UUID
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [generated in 0.00016s] (UUID('6ed1332f-6147-4ea1-8b67-e058d08a83b8'),)
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 95.77s ago] ('harsh2',)
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.id = $1::UUID AND documents.user_id = $2::INTEGER
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [generated in 0.00012s] ('6ed1332f-6147-4ea1-8b67-e058d08a83b8', 2)
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:36:51 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 95.78s ago] ('harsh2',)
+2025-07-22 15:36:51 - backend.routers.documents - INFO - documents.py:732 - generate_document - [AI] Starting document generation for user 2, doc 6ed1332f-6147-4ea1-8b67-e058d08a83b8
+2025-07-22 15:36:51 - backend.ai.html_parser - INFO - html_parser.py:74 - parse_template - Parsed HTML into 15 logical sections
+2025-07-22 15:36:51 - backend.ai.workflow - INFO - workflow.py:21 - process - Parsed template into 15 sections.
+2025-07-22 15:37:08 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:37:08 - backend.ai.content_generator - INFO - content_generator.py:148 - generate_section - Generated section 57c50211-9ed9-4535-9628-875496f01b58 successfully. Validation: ValidationStatus.VALID
+2025-07-22 15:37:08 - backend.ai.workflow - INFO - workflow.py:40 - process - Generated section 57c50211-9ed9-4535-9628-875496f01b58 (index 0).
+2025-07-22 15:37:08 - backend.ai.workflow - INFO - workflow.py:56 - process - Section 57c50211-9ed9-4535-9628-875496f01b58 validated as valid.
+2025-07-22 15:37:14 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:37:14 - backend.ai.content_generator - INFO - content_generator.py:148 - generate_section - Generated section c42ff81d-4014-41ec-b33f-e096e8c0c5db successfully. Validation: ValidationStatus.VALID
+2025-07-22 15:37:14 - backend.ai.workflow - INFO - workflow.py:40 - process - Generated section c42ff81d-4014-41ec-b33f-e096e8c0c5db (index 1).
+2025-07-22 15:37:14 - backend.ai.workflow - INFO - workflow.py:56 - process - Section c42ff81d-4014-41ec-b33f-e096e8c0c5db validated as valid.
+2025-07-22 15:37:25 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:37:25 - backend.ai.content_generator - INFO - content_generator.py:148 - generate_section - Generated section e90b74fb-ba8b-40fd-ba9c-85d6213ecb3b successfully. Validation: ValidationStatus.VALID
+2025-07-22 15:37:25 - backend.ai.workflow - INFO - workflow.py:40 - process - Generated section e90b74fb-ba8b-40fd-ba9c-85d6213ecb3b (index 2).
+2025-07-22 15:37:25 - backend.ai.workflow - INFO - workflow.py:56 - process - Section e90b74fb-ba8b-40fd-ba9c-85d6213ecb3b validated as valid.
+2025-07-22 15:37:39 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:37:39 - backend.ai.content_generator - WARNING - content_generator.py:165 - generate_section - Section 4c63397c-917d-4820-80b4-68d645adc158 validation failed: Generated content does not include project name. Retrying.
+2025-07-22 15:37:39 - backend.ai.content_generator - WARNING - content_generator.py:170 - generate_section - Retrying section 4c63397c-917d-4820-80b4-68d645adc158 due to error: Content validation failed: Generated content does not include project name
+2025-07-22 15:37:57 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:37:57 - backend.ai.content_generator - INFO - content_generator.py:148 - generate_section - Generated section 4c63397c-917d-4820-80b4-68d645adc158 successfully. Validation: ValidationStatus.VALID
+2025-07-22 15:37:57 - backend.ai.workflow - INFO - workflow.py:40 - process - Generated section 4c63397c-917d-4820-80b4-68d645adc158 (index 3).
+2025-07-22 15:37:57 - backend.ai.workflow - INFO - workflow.py:56 - process - Section 4c63397c-917d-4820-80b4-68d645adc158 validated as valid.
+2025-07-22 15:38:10 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:38:10 - backend.ai.content_generator - INFO - content_generator.py:148 - generate_section - Generated section fb5600a2-de2b-4d9b-b740-cdfbb8b69c14 successfully. Validation: ValidationStatus.VALID
+2025-07-22 15:38:10 - backend.ai.workflow - INFO - workflow.py:40 - process - Generated section fb5600a2-de2b-4d9b-b740-cdfbb8b69c14 (index 4).
+2025-07-22 15:38:10 - backend.ai.workflow - INFO - workflow.py:56 - process - Section fb5600a2-de2b-4d9b-b740-cdfbb8b69c14 validated as valid.
+2025-07-22 15:38:24 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:38:24 - backend.ai.content_generator - WARNING - content_generator.py:165 - generate_section - Section 648ddf49-ec47-4d71-a885-2d6d416ecd5e validation failed: Generated content does not include project name. Retrying.
+2025-07-22 15:38:24 - backend.ai.content_generator - WARNING - content_generator.py:170 - generate_section - Retrying section 648ddf49-ec47-4d71-a885-2d6d416ecd5e due to error: Content validation failed: Generated content does not include project name
+2025-07-22 15:38:42 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:38:42 - backend.ai.content_generator - INFO - content_generator.py:148 - generate_section - Generated section 648ddf49-ec47-4d71-a885-2d6d416ecd5e successfully. Validation: ValidationStatus.VALID
+2025-07-22 15:38:42 - backend.ai.workflow - INFO - workflow.py:40 - process - Generated section 648ddf49-ec47-4d71-a885-2d6d416ecd5e (index 5).
+2025-07-22 15:38:42 - backend.ai.workflow - INFO - workflow.py:56 - process - Section 648ddf49-ec47-4d71-a885-2d6d416ecd5e validated as valid.
+2025-07-22 15:38:50 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:38:50 - backend.ai.content_generator - INFO - content_generator.py:148 - generate_section - Generated section e6b2c744-c296-4faa-8059-aee476accef8 successfully. Validation: ValidationStatus.VALID
+2025-07-22 15:38:50 - backend.ai.workflow - INFO - workflow.py:40 - process - Generated section e6b2c744-c296-4faa-8059-aee476accef8 (index 6).
+2025-07-22 15:38:50 - backend.ai.workflow - INFO - workflow.py:56 - process - Section e6b2c744-c296-4faa-8059-aee476accef8 validated as valid.
+2025-07-22 15:39:14 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:39:14 - backend.ai.content_generator - INFO - content_generator.py:148 - generate_section - Generated section 7bd3a99b-1d01-4b36-82b6-d57086450b79 successfully. Validation: ValidationStatus.VALID
+2025-07-22 15:39:14 - backend.ai.workflow - INFO - workflow.py:40 - process - Generated section 7bd3a99b-1d01-4b36-82b6-d57086450b79 (index 7).
+2025-07-22 15:39:14 - backend.ai.workflow - INFO - workflow.py:56 - process - Section 7bd3a99b-1d01-4b36-82b6-d57086450b79 validated as valid.
+2025-07-22 15:39:24 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:39:24 - backend.ai.content_generator - INFO - content_generator.py:148 - generate_section - Generated section eadd4edd-1311-47e6-847a-837fd9d78759 successfully. Validation: ValidationStatus.VALID
+2025-07-22 15:39:24 - backend.ai.workflow - INFO - workflow.py:40 - process - Generated section eadd4edd-1311-47e6-847a-837fd9d78759 (index 8).
+2025-07-22 15:39:24 - backend.ai.workflow - INFO - workflow.py:56 - process - Section eadd4edd-1311-47e6-847a-837fd9d78759 validated as valid.
+2025-07-22 15:39:40 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:39:40 - backend.ai.content_generator - INFO - content_generator.py:148 - generate_section - Generated section 72e468cc-7f1a-4067-bf53-5dcd66f1a61a successfully. Validation: ValidationStatus.VALID
+2025-07-22 15:39:40 - backend.ai.workflow - INFO - workflow.py:40 - process - Generated section 72e468cc-7f1a-4067-bf53-5dcd66f1a61a (index 9).
+2025-07-22 15:39:40 - backend.ai.workflow - INFO - workflow.py:56 - process - Section 72e468cc-7f1a-4067-bf53-5dcd66f1a61a validated as valid.
+2025-07-22 15:39:52 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:39:52 - backend.ai.content_generator - WARNING - content_generator.py:165 - generate_section - Section 4845d702-f129-4128-9e39-d35c6bf00659 validation failed: Generated content does not include project name. Retrying.
+2025-07-22 15:39:52 - backend.ai.content_generator - WARNING - content_generator.py:170 - generate_section - Retrying section 4845d702-f129-4128-9e39-d35c6bf00659 due to error: Content validation failed: Generated content does not include project name
+2025-07-22 15:40:08 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:40:08 - backend.ai.content_generator - INFO - content_generator.py:148 - generate_section - Generated section 4845d702-f129-4128-9e39-d35c6bf00659 successfully. Validation: ValidationStatus.VALID
+2025-07-22 15:40:08 - backend.ai.workflow - INFO - workflow.py:40 - process - Generated section 4845d702-f129-4128-9e39-d35c6bf00659 (index 10).
+2025-07-22 15:40:08 - backend.ai.workflow - INFO - workflow.py:56 - process - Section 4845d702-f129-4128-9e39-d35c6bf00659 validated as valid.
+2025-07-22 15:40:29 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:40:29 - backend.ai.content_generator - INFO - content_generator.py:148 - generate_section - Generated section b2d49408-ac1a-43fb-a3eb-a4cb70cac223 successfully. Validation: ValidationStatus.VALID
+2025-07-22 15:40:29 - backend.ai.workflow - INFO - workflow.py:40 - process - Generated section b2d49408-ac1a-43fb-a3eb-a4cb70cac223 (index 11).
+2025-07-22 15:40:29 - backend.ai.workflow - INFO - workflow.py:56 - process - Section b2d49408-ac1a-43fb-a3eb-a4cb70cac223 validated as valid.
+2025-07-22 15:40:44 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:40:44 - backend.ai.content_generator - WARNING - content_generator.py:165 - generate_section - Section 8291bf45-013a-4e28-b174-f659528765bf validation failed: Generated content does not include project name. Retrying.
+2025-07-22 15:40:44 - backend.ai.content_generator - WARNING - content_generator.py:170 - generate_section - Retrying section 8291bf45-013a-4e28-b174-f659528765bf due to error: Content validation failed: Generated content does not include project name
+2025-07-22 15:41:10 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:41:10 - backend.ai.content_generator - INFO - content_generator.py:148 - generate_section - Generated section 8291bf45-013a-4e28-b174-f659528765bf successfully. Validation: ValidationStatus.VALID
+2025-07-22 15:41:10 - backend.ai.workflow - INFO - workflow.py:40 - process - Generated section 8291bf45-013a-4e28-b174-f659528765bf (index 12).
+2025-07-22 15:41:10 - backend.ai.workflow - INFO - workflow.py:56 - process - Section 8291bf45-013a-4e28-b174-f659528765bf validated as valid.
+2025-07-22 15:41:18 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:41:18 - backend.ai.content_generator - INFO - content_generator.py:148 - generate_section - Generated section 212c4023-3dfa-4efa-8e94-3e4aaae32624 successfully. Validation: ValidationStatus.VALID
+2025-07-22 15:41:18 - backend.ai.workflow - INFO - workflow.py:40 - process - Generated section 212c4023-3dfa-4efa-8e94-3e4aaae32624 (index 13).
+2025-07-22 15:41:18 - backend.ai.workflow - INFO - workflow.py:56 - process - Section 212c4023-3dfa-4efa-8e94-3e4aaae32624 validated as valid.
+2025-07-22 15:41:33 - httpx - INFO - _client.py:1740 - _send_single_request - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2025-07-22 15:41:33 - backend.ai.content_generator - INFO - content_generator.py:148 - generate_section - Generated section 758a669b-36a8-4461-b0b1-10c65e4f811e successfully. Validation: ValidationStatus.VALID
+2025-07-22 15:41:33 - backend.ai.workflow - INFO - workflow.py:40 - process - Generated section 758a669b-36a8-4461-b0b1-10c65e4f811e (index 14).
+2025-07-22 15:41:33 - backend.ai.workflow - INFO - workflow.py:56 - process - Section 758a669b-36a8-4461-b0b1-10c65e4f811e validated as valid.
+2025-07-22 15:41:33 - backend.ai.workflow - INFO - workflow.py:72 - process - Assembled final HTML document with 15 sections.
+2025-07-22 15:41:33 - backend.ai.workflow - INFO - workflow.py:137 - run - Document generation workflow complete.
+2025-07-22 15:41:33 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.id = $1::UUID AND documents.user_id = $2::INTEGER
+2025-07-22 15:41:33 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 282.4s ago] ('6ed1332f-6147-4ea1-8b67-e058d08a83b8', 2)
+2025-07-22 15:41:33 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - UPDATE documents SET ai_content=$1::VARCHAR, html_template=$2::VARCHAR, ai_generation_metadata=$3::JSONB, generated_sections=$4::JSONB WHERE documents.id = $5::UUID AND documents.user_id = $6::INTEGER
+2025-07-22 15:41:33 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [generated in 0.00090s] ('<h1>ZenFlow - Comprehensive Internal HR Management System</h1>\n<p>ZenFlow is a strategic initiative aimed at developing a robust, internal Human Res ... (41071 characters truncated) ... on</td>\n        <td>4</td>\n    </tr>\n    <tr>\n        <td><strong>Total</strong></td>\n        <td><strong>203</strong></td>\n    </tr>\n</table>', '<p>Qovai - AI-Based Social Media Management Platform</p>\n<h1>Timeline</h1>\n<p><b>Prepared by:</b> Theta Technolabs\n<b>Version:</b> 1.0\n<b>Client: ... (4281 characters truncated) ... Evaluation (types, sources, feasibility)</td><td>16</td></tr><tr><td>User Role Mapping</td><td>16</td></tr><tr><td>Total</td><td>45</td></tr></table>', '"{}"', '"[{\\"section_id\\": \\"57c50211-9ed9-4535-9628-875496f01b58\\", \\"original_html\\": \\"<p>Qovai - AI-Based Social Media Management Platform</p>\\", ... (54061 characters truncated) ... tus_code\\": 200, \\"validation_result\\": true}, \\"validation_status\\": \\"valid\\", \\"error_message\\": null, \\"generation_time_ms\\": 15005}]"', '6ed1332f-6147-4ea1-8b67-e058d08a83b8', 2)
+2025-07-22 15:41:33 - sqlalchemy.engine.Engine - INFO - base.py:2704 - _connection_commit_impl - COMMIT
+2025-07-22 15:41:33 - backend.routers.documents - INFO - documents.py:774 - generate_document - [AI] Document generation complete for doc 6ed1332f-6147-4ea1-8b67-e058d08a83b8
+2025-07-22 15:41:33 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:41:33 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:41:33 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 378.2s ago] ('harsh2',)
+2025-07-22 15:41:33 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.user_id = $1::INTEGER
+2025-07-22 15:41:33 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 378.2s ago] (2,)
+2025-07-22 15:41:33 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:41:34 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:41:34 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:41:34 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 378.2s ago] ('harsh2',)
+2025-07-22 15:41:34 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.id = $1::UUID AND documents.user_id = $2::INTEGER
+2025-07-22 15:41:34 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 282.5s ago] ('6ed1332f-6147-4ea1-8b67-e058d08a83b8', 2)
+2025-07-22 15:41:34 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK
+2025-07-22 15:44:47 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:44:47 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:44:47 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 571.8s ago] ('harsh2',)
+2025-07-22 15:44:47 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.id = $1::UUID AND documents.user_id = $2::INTEGER
+2025-07-22 15:44:47 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 476s ago] ('6ed1332f-6147-4ea1-8b67-e058d08a83b8', 2)
+2025-07-22 15:44:47 - backend.routers.documents - INFO - documents.py:403 - export_pdf - [PDF Export] Generating PDF for document 6ed1332f-6147-4ea1-8b67-e058d08a83b8 with title 'Qovai - AI-Based Social Media Management Platform - 6 weeks - Updated (1).docx'
+2025-07-22 15:44:47 - backend.utils.metrics - INFO - metrics.py:105 - _load_metrics - Loaded metrics from logs/pdf_metrics.json
+2025-07-22 15:44:47 - backend.utils.metrics - INFO - metrics.py:81 - __init__ - PDF metrics collector initialized
+2025-07-22 15:44:48 - backend.services.pdf_generator - INFO - pdf_generator.py:321 - generate_pdf_from_html - Starting PDF generation - Title: Qovai - AI-Based Social Media Management Platform - 6 weeks - Updated (1).docx, Content size: 40568 chars
+2025-07-22 15:44:48 - backend.services.pdf_generator - DEBUG - pdf_generator.py:331 - generate_pdf_from_html - Validating HTML content...
+2025-07-22 15:44:48 - backend.services.pdf_generator - INFO - pdf_generator.py:333 - generate_pdf_from_html - HTML content validation passed
+2025-07-22 15:44:48 - backend.services.pdf_generator - DEBUG - pdf_generator.py:340 - generate_pdf_from_html - Adding PDF styling to HTML content...
+2025-07-22 15:44:48 - backend.services.pdf_generator - DEBUG - pdf_generator.py:344 - generate_pdf_from_html - Loading HTML content into browser page...
+2025-07-22 15:44:49 - backend.services.pdf_generator - INFO - pdf_generator.py:349 - generate_pdf_from_html - HTML content loaded successfully
+2025-07-22 15:44:49 - backend.services.pdf_generator - DEBUG - pdf_generator.py:371 - generate_pdf_from_html - Generating PDF from HTML content...
+2025-07-22 15:44:49 - backend.services.pdf_generator - INFO - pdf_generator.py:378 - generate_pdf_from_html - PDF generation completed in 0.82 seconds
+2025-07-22 15:44:49 - backend.services.pdf_generator - DEBUG - pdf_generator.py:381 - generate_pdf_from_html - Validating generated PDF...
+2025-07-22 15:44:49 - backend.services.pdf_generator - INFO - pdf_generator.py:209 - validate_pdf_output - PDF validation passed - size: 200498 bytes
+2025-07-22 15:44:49 - backend.services.pdf_generator - INFO - pdf_generator.py:383 - generate_pdf_from_html - PDF validation passed - Final size: 200498 bytes
+2025-07-22 15:44:49 - backend.services.pdf_generator - DEBUG - pdf_generator.py:431 - generate_pdf_from_html - Browser page closed successfully
+2025-07-22 15:44:51 - httpx - INFO - _client.py:1025 - _send_single_request - HTTP Request: POST https://yvehddiznhpqaqbjdihu.supabase.co/storage/v1/object/documents/Qovai_-_AI-Based_Social_Media_Management_Platform_-_6_weeks_-_Updated__1_.docx_6ed1332f-6147-4ea1-8b67-e058d08a83b8_ad6262745f7941a89a328117fc340f6d.pdf "HTTP/2 200 OK"
+2025-07-22 15:44:51 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - UPDATE documents SET final_file_url=$1::VARCHAR WHERE documents.id = $2::UUID AND documents.user_id = $3::INTEGER
+2025-07-22 15:44:51 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [generated in 0.00024s] ('https://yvehddiznhpqaqbjdihu.supabase.co/storage/v1/object/public/documents/Qovai_-_AI-Based_Social_Media_Management_Platform_-_6_weeks_-_Updated__1_.docx_6ed1332f-6147-4ea1-8b67-e058d08a83b8_ad6262745f7941a89a328117fc340f6d.pdf?', '6ed1332f-6147-4ea1-8b67-e058d08a83b8', 2)
+2025-07-22 15:44:51 - sqlalchemy.engine.Engine - INFO - base.py:2704 - _connection_commit_impl - COMMIT
+2025-07-22 15:45:12 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:45:12 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:45:12 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 596.8s ago] ('harsh2',)
+2025-07-22 15:45:12 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.id = $1::UUID AND documents.user_id = $2::INTEGER
+2025-07-22 15:45:12 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 501s ago] ('6ed1332f-6147-4ea1-8b67-e058d08a83b8', 2)
+2025-07-22 15:45:16 - httpx - INFO - _client.py:1025 - _send_single_request - HTTP Request: POST https://yvehddiznhpqaqbjdihu.supabase.co/storage/v1/object/documents/Qovai_-_AI-Based_Social_Media_Management_Platform_-_6_weeks_-_Updated__1_.docx_6ed1332f-6147-4ea1-8b67-e058d08a83b8_a0ec7536a4114b22a9e32a84d4a7d395.docx "HTTP/2 200 OK"
+2025-07-22 15:45:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - UPDATE documents SET final_file_url=$1::VARCHAR WHERE documents.id = $2::UUID AND documents.user_id = $3::INTEGER
+2025-07-22 15:45:16 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 25.15s ago] ('https://yvehddiznhpqaqbjdihu.supabase.co/storage/v1/object/public/documents/Qovai_-_AI-Based_Social_Media_Management_Platform_-_6_weeks_-_Updated__1_.docx_6ed1332f-6147-4ea1-8b67-e058d08a83b8_a0ec7536a4114b22a9e32a84d4a7d395.docx?', '6ed1332f-6147-4ea1-8b67-e058d08a83b8', 2)
+2025-07-22 15:45:16 - sqlalchemy.engine.Engine - INFO - base.py:2704 - _connection_commit_impl - COMMIT
+2025-07-22 15:46:59 - sqlalchemy.engine.Engine - INFO - base.py:2698 - _connection_begin_impl - BEGIN (implicit)
+2025-07-22 15:46:59 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT users.id, users.username, users.hashed_password, users.created_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2025-07-22 15:46:59 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 704s ago] ('harsh2',)
+2025-07-22 15:46:59 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - SELECT documents.id, documents.user_id, documents.name, documents.stored_filename, documents.title, documents.created_at, documents.type, documents.status, documents.original_file_url, documents.ai_content, documents.final_file_url, documents.parsed_structure, documents.html_template, documents.ai_generation_metadata, documents.generated_sections 
+FROM documents 
+WHERE documents.user_id = $1::INTEGER
+2025-07-22 15:46:59 - sqlalchemy.engine.Engine - INFO - base.py:1842 - _execute_context - [cached since 704s ago] (2,)
+2025-07-22 15:46:59 - sqlalchemy.engine.Engine - INFO - base.py:2701 - _connection_rollback_impl - ROLLBACK

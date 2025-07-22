@@ -3,6 +3,7 @@ import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
+import { memo } from 'react';
 
 // Custom table extension with enhanced styling and functionality
 export const TiptapTableExtension = Extension.create({
@@ -37,7 +38,10 @@ export const TiptapTableExtension = Extension.create({
 
   addKeyboardShortcuts() {
     return {
+      // Table creation
       'Mod-Alt-t': () => this.editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+      
+      // Table navigation
       'Tab': () => {
         if (this.editor.isActive('table')) {
           return this.editor.chain().focus().goToNextCell().run();
@@ -47,6 +51,68 @@ export const TiptapTableExtension = Extension.create({
       'Shift-Tab': () => {
         if (this.editor.isActive('table')) {
           return this.editor.chain().focus().goToPreviousCell().run();
+        }
+        return false;
+      },
+      
+      // Row operations
+      'Mod-Alt-ArrowUp': () => {
+        if (this.editor.isActive('table')) {
+          return this.editor.chain().focus().addRowBefore().run();
+        }
+        return false;
+      },
+      'Mod-Alt-ArrowDown': () => {
+        if (this.editor.isActive('table')) {
+          return this.editor.chain().focus().addRowAfter().run();
+        }
+        return false;
+      },
+      'Mod-Alt-Backspace': () => {
+        if (this.editor.isActive('table')) {
+          return this.editor.chain().focus().deleteRow().run();
+        }
+        return false;
+      },
+      
+      // Column operations
+      'Mod-Alt-ArrowLeft': () => {
+        if (this.editor.isActive('table')) {
+          return this.editor.chain().focus().addColumnBefore().run();
+        }
+        return false;
+      },
+      'Mod-Alt-ArrowRight': () => {
+        if (this.editor.isActive('table')) {
+          return this.editor.chain().focus().addColumnAfter().run();
+        }
+        return false;
+      },
+      'Mod-Alt-Delete': () => {
+        if (this.editor.isActive('table')) {
+          return this.editor.chain().focus().deleteColumn().run();
+        }
+        return false;
+      },
+      
+      // Header operations
+      'Mod-Alt-h': () => {
+        if (this.editor.isActive('table')) {
+          return this.editor.chain().focus().toggleHeaderRow().run();
+        }
+        return false;
+      },
+      
+      // Cell operations
+      'Mod-Alt-m': () => {
+        if (this.editor.isActive('table')) {
+          return this.editor.chain().focus().mergeCells().run();
+        }
+        return false;
+      },
+      'Mod-Alt-s': () => {
+        if (this.editor.isActive('table')) {
+          return this.editor.chain().focus().splitCell().run();
         }
         return false;
       },

@@ -48,35 +48,35 @@
   - Handle complex table layouts and multi-page table spanning
   - _Requirements: 4.1, 4.2, 4.3, 4.4_
 
-- [ ] 8. Implement clean document formatting and title management
+- [x] 8. Implement clean document formatting and title management
   - Create DocumentFormatter class to handle title placement options
   - Add cover page generation logic with full-page utilization
   - Implement title deduplication to remove redundant headers
   - Create configuration options for cover page vs. clean content start
   - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
-- [ ] 9. Update PDF export endpoint to use WeasyPrint
+- [x] 9. Update PDF export endpoint to use WeasyPrint
   - Modify export_pdf() function in documents.py to use new WeasyPrint generator
   - Replace Playwright-based PDF generation with WeasyPrint implementation
   - Update error handling and response formatting for new PDF generator
   - Add Inter font configuration and CSS injection for consistent typography
   - _Requirements: 8.1, 8.2, 8.3, 8.4_
 
-- [ ] 10. Add comprehensive error handling and user feedback
+- [x] 10. Add comprehensive error handling and user feedback
   - Implement specific error messages for different export failure types
   - Add retry mechanisms for failed PDF/DOCX generation
   - Create user-friendly error reporting with actionable suggestions
   - Add loading states and progress indicators for export operations
   - _Requirements: 3.1, 4.1, 7.1, 8.1_
 
-- [ ] 11. Create integration tests for export consistency
+- [x] 11. Create integration tests for export consistency
   - Write tests to verify PDF and DOCX exports produce identical formatting
   - Add tests for table rendering consistency across both formats
   - Create tests for heading hierarchy and layout synchronization
   - Implement tests for WeasyPrint integration and font rendering
   - _Requirements: 3.1, 3.2, 3.3, 4.1, 8.4_
 
-- [ ] 12. Optimize frontend editor performance and user experience
+- [x] 12. Optimize frontend editor performance and user experience
   - Add debounced auto-save functionality for editor content
   - Implement lazy loading for table extension to improve initial load time
   - Add keyboard shortcuts for common table operations

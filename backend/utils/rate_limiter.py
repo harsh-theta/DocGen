@@ -1,154 +1,183 @@
 """
-Rate limiting implementation for API endpoints
+Rate limiting utilities for API endpoints.
+
+This module provides rate limiting functionality to prevent abuse
+of resource-intensive operations like document exports.
 """
 
-import time
-from typing import Dict, Tuple, List, Optional
-import threading
-from collections import defaultdict, deque
 import logging
-from backend.core.config import settings
+import time
+from typing import Dict, Any, Optional, Tuple
+import asyncio
+from datetime import datetime
+import uuid
 
 logger = logging.getLogger(__name__)
 
 class RateLimiter:
     """
-    Rate limiter implementation using sliding window algorithm
+    Rate limiter for API endpoints.
     
-    This class provides methods to check if a request should be rate limited
-    based on the number of requests in a given time window.
+    This class tracks and limits the frequency of operations
+    to prevent abuse and ensure fair resource allocation.
     """
     
-    _instance = None
-    _lock = threading.Lock()
+    # In-memory storage of user request counts
+    _user_requests: Dict[str, Dict[str, Any]] = {}
     
-    def __new__(cls):
-        with cls._lock:
-            if cls._instance is None:
-                cls._instance = super(RateLimiter, cls).__new__(cls)
-                cls._instance._initialized = False
-            return cls._instance
+    # Default rate limits
+    DEFAULT_LIMITS = {
+        "pdf_export": {"count": 10, "period": 3600},  # 10 per hour
+        "docx_export": {"count": 10, "period": 3600},  # 10 per hour
+        "default": {"count": 60, "period": 3600}       # 60 per hour
+    }
     
-    def __init__(self):
-        if self._initialized:
-            return
-            
-        # Store request timestamps by user_id and endpoint
-        # Format: {(user_id, endpoint): deque([timestamp1, timestamp2, ...])}
-        self._request_history = defaultdict(lambda: deque(maxlen=100))
+    @classmethod
+    async def check_rate_limit(
+        cls,
+        user_id: str,
+        operation_type: str,
+        custom_limits: Optional[Dict[str, Dict[str, int]]] = None
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Check if an operation would exceed rate limits.
         
-        # Rate limit configurations by endpoint
-        # Format: {endpoint: (requests_per_minute, window_size_seconds)}
-        self._rate_limits = {
-            "pdf_export": (settings.PDF_EXPORT_RATE_LIMIT, 60)  # 10 requests per minute by default
+        Args:
+            user_id: ID of the user performing the operation
+            operation_type: Type of operation (e.g., 'pdf_export')
+            custom_limits: Optional custom rate limits
+            
+        Returns:
+            Tuple[bool, Dict]: (allowed, limit_info)
+            - allowed: Whether the operation is allowed
+            - limit_info: Information about the rate limit
+        """
+        # Get the appropriate limit
+        limits = custom_limits or cls.DEFAULT_LIMITS
+        limit_config = limits.get(operation_type, limits.get("default"))
+        
+        max_count = limit_config["count"]
+        period = limit_config["period"]
+        
+        # Get or create user tracking data
+        user_key = f"{user_id}:{operation_type}"
+        if user_key not in cls._user_requests:
+            cls._user_requests[user_key] = {
+                "count": 0,
+                "period_start": time.time(),
+                "requests": []
+            }
+        
+        user_data = cls._user_requests[user_key]
+        
+        # Check if period has reset
+        current_time = time.time()
+        if current_time - user_data["period_start"] > period:
+            # Reset counters for new period
+            user_data["count"] = 0
+            user_data["period_start"] = current_time
+            user_data["requests"] = []
+        
+        # Clean up old requests
+        user_data["requests"] = [
+            req for req in user_data["requests"]
+            if current_time - req["timestamp"] <= period
+        ]
+        
+        # Update count based on actual requests within period
+        user_data["count"] = len(user_data["requests"])
+        
+        # Check if limit exceeded
+        allowed = user_data["count"] < max_count
+        
+        # Prepare limit info
+        limit_info = {
+            "allowed": allowed,
+            "limit": max_count,
+            "remaining": max(0, max_count - user_data["count"]),
+            "reset": user_data["period_start"] + period,
+            "reset_in_seconds": int(user_data["period_start"] + period - current_time)
         }
         
-        self._initialized = True
-        logger.info("Rate limiter initialized")
+        # If allowed, increment counter
+        if allowed:
+            request_id = str(uuid.uuid4())
+            user_data["requests"].append({
+                "id": request_id,
+                "timestamp": current_time,
+                "operation_type": operation_type
+            })
+            user_data["count"] += 1
+            
+            # Update remaining count
+            limit_info["remaining"] = max(0, max_count - user_data["count"])
+        
+        return allowed, limit_info
     
-    def is_rate_limited(self, user_id: str, endpoint: str) -> Tuple[bool, Optional[int]]:
+    @classmethod
+    def record_operation(
+        cls,
+        user_id: str,
+        operation_type: str,
+        success: bool = True,
+        metadata: Optional[Dict[str, Any]] = None
+    ):
         """
-        Check if a request should be rate limited
+        Record a completed operation for rate limiting purposes.
         
         Args:
-            user_id: ID of the user making the request
-            endpoint: Endpoint identifier (e.g., "pdf_export")
-            
-        Returns:
-            Tuple of (is_limited, retry_after_seconds)
-            - is_limited: True if request should be rate limited
-            - retry_after_seconds: Seconds until rate limit expires, or None if not limited
+            user_id: ID of the user who performed the operation
+            operation_type: Type of operation (e.g., 'pdf_export')
+            success: Whether the operation was successful
+            metadata: Optional additional metadata about the operation
         """
-        with self._lock:
-            # Get rate limit configuration for endpoint
-            if endpoint not in self._rate_limits:
-                # No rate limit for this endpoint
-                return False, None
+        user_key = f"{user_id}:{operation_type}"
+        if user_key not in cls._user_requests:
+            return
+        
+        # Find the most recent request and update it
+        user_data = cls._user_requests[user_key]
+        if user_data["requests"]:
+            latest_request = user_data["requests"][-1]
+            latest_request["success"] = success
+            latest_request["completion_time"] = time.time()
             
-            requests_per_minute, window_size = self._rate_limits[endpoint]
-            
-            # Get request history for this user and endpoint
-            key = (user_id, endpoint)
-            history = self._request_history[key]
-            
-            # Current time
-            current_time = time.time()
-            
-            # Remove expired entries (older than window_size)
-            while history and history[0] < current_time - window_size:
-                history.popleft()
-            
-            # Check if rate limit is exceeded
-            if len(history) >= requests_per_minute:
-                # Calculate time until oldest request expires
-                oldest_request = history[0]
-                retry_after = int(oldest_request + window_size - current_time) + 1
+            if metadata:
+                latest_request["metadata"] = metadata
+    
+    @classmethod
+    async def cleanup_old_data(cls):
+        """Background task to clean up old rate limit data."""
+        while True:
+            try:
+                current_time = time.time()
+                keys_to_remove = []
                 
-                logger.warning(f"Rate limit exceeded for user {user_id} on {endpoint}. "
-                              f"Retry after {retry_after} seconds.")
+                for user_key, user_data in cls._user_requests.items():
+                    # If period has expired and no recent requests, remove the entry
+                    period = cls.DEFAULT_LIMITS.get(
+                        user_key.split(":")[-1], 
+                        cls.DEFAULT_LIMITS["default"]
+                    )["period"]
+                    
+                    if current_time - user_data["period_start"] > period * 2:
+                        # Check if there are any recent requests
+                        has_recent = False
+                        for req in user_data["requests"]:
+                            if current_time - req["timestamp"] <= period:
+                                has_recent = True
+                                break
+                        
+                        if not has_recent:
+                            keys_to_remove.append(user_key)
                 
-                return True, retry_after
-            
-            # Add current request to history
-            history.append(current_time)
-            
-            # Not rate limited
-            return False, None
-    
-    def update_rate_limit(self, endpoint: str, requests_per_minute: int, window_size: int = 60) -> None:
-        """
-        Update rate limit configuration for an endpoint
-        
-        Args:
-            endpoint: Endpoint identifier
-            requests_per_minute: Maximum requests allowed in the window
-            window_size: Window size in seconds (default: 60)
-        """
-        with self._lock:
-            self._rate_limits[endpoint] = (requests_per_minute, window_size)
-            logger.info(f"Updated rate limit for {endpoint}: {requests_per_minute} requests per {window_size} seconds")
-    
-    def get_rate_limit_config(self, endpoint: str) -> Optional[Tuple[int, int]]:
-        """
-        Get rate limit configuration for an endpoint
-        
-        Args:
-            endpoint: Endpoint identifier
-            
-        Returns:
-            Tuple of (requests_per_minute, window_size_seconds) or None if not configured
-        """
-        with self._lock:
-            return self._rate_limits.get(endpoint)
-    
-    def clear_history(self, user_id: Optional[str] = None, endpoint: Optional[str] = None) -> None:
-        """
-        Clear rate limit history
-        
-        Args:
-            user_id: Optional user ID to clear history for
-            endpoint: Optional endpoint to clear history for
-        """
-        with self._lock:
-            if user_id and endpoint:
-                # Clear specific user and endpoint
-                key = (user_id, endpoint)
-                if key in self._request_history:
-                    self._request_history[key].clear()
-            elif user_id:
-                # Clear all endpoints for user
-                for key in list(self._request_history.keys()):
-                    if key[0] == user_id:
-                        self._request_history[key].clear()
-            elif endpoint:
-                # Clear all users for endpoint
-                for key in list(self._request_history.keys()):
-                    if key[1] == endpoint:
-                        self._request_history[key].clear()
-            else:
-                # Clear all history
-                self._request_history.clear()
-
-
-# Global instance for easy access
-rate_limiter = RateLimiter()
+                # Remove old entries
+                for key in keys_to_remove:
+                    cls._user_requests.pop(key, None)
+                
+                # Sleep for a while before next cleanup
+                await asyncio.sleep(3600)  # 1 hour
+                
+            except Exception as e:
+                logger.error(f"Error in rate limiter cleanup task: {e}")
+                await asyncio.sleep(300)  # Retry after 5 minutes on error

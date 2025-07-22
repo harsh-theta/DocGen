@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.core.config import settings
 from backend.core.database import engine, Base
 from backend.core.logging_config import setup_logging
-from backend.routers import auth, documents
+from backend.routers import auth, documents, export_status
 from supabase import create_client, Client
 import logging
 import os
@@ -50,6 +50,30 @@ async def on_startup():
         logger.error(f"Failed to initialize Supabase client: {str(e)}")
         raise
     
+    # Initialize progress tracker
+    try:
+        from backend.utils.progress_tracker import ProgressTracker
+        from pathlib import Path
+        import os
+        
+        storage_dir = Path(os.path.join(os.path.dirname(__file__), "data", "progress"))
+        ProgressTracker.initialize(storage_dir=storage_dir, retention_time=3600)
+        logger.info("Progress tracker initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize progress tracker: {str(e)}")
+        # Don't raise, as this is not critical for the application to run
+    
+    # Initialize rate limiter cleanup task
+    try:
+        from backend.utils.rate_limiter import RateLimiter
+        import asyncio
+        
+        asyncio.create_task(RateLimiter.cleanup_old_data())
+        logger.info("Rate limiter cleanup task started")
+    except Exception as e:
+        logger.error(f"Failed to start rate limiter cleanup task: {str(e)}")
+        # Don't raise, as this is not critical for the application to run
+    
     logger.info("DocGen API startup completed successfully")
 
 @app.get("/")
@@ -59,4 +83,5 @@ def read_root():
 # Routers
 app.include_router(auth.router)
 app.include_router(documents.router)
+app.include_router(export_status.router)
 # Future: app.include_router(ai.router), app.include_router(export.router), ...
