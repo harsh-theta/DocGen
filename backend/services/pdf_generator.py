@@ -23,6 +23,8 @@ import html
 from bs4 import BeautifulSoup
 import bleach
 from backend.utils.metrics import pdf_metrics
+from backend.services.export_manager import ExportFormatManager
+from backend.services.document_formatter import DocumentFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -270,9 +272,21 @@ def create_error_response(error: Exception, request_id: Optional[str] = None) ->
 class PDFGenerator:
     """Service for generating PDF files from HTML content"""
     
-    def __init__(self):
+    def __init__(self, export_config: Optional[Dict] = None):
+        """
+        Initialize the PDF generator
+        
+        Args:
+            export_config: Optional configuration for export formatting
+        """
         self._browser = None
         self._playwright = None
+        
+        # Initialize export format manager for consistent styling
+        self.export_manager = ExportFormatManager(export_config)
+        
+        # Initialize document formatter for title and cover page handling
+        self.document_formatter = DocumentFormatter(export_config)
     
     async def __aenter__(self):
         """Async context manager entry"""
@@ -443,150 +457,42 @@ class PDFGenerator:
         Returns:
             str: HTML content with PDF-optimized CSS styling
         """
-        # CSS styles optimized for PDF generation
-        pdf_css = """
-        <style>
-            @page {
-                size: A4;
-                margin: 0;
-            }
-            
+        # Get CSS from the unified export format manager
+        css_content = self.export_manager.get_css_template()
+        
+        # Add Playwright-specific page rules
+        playwright_page_css = """
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
+        .pdf-content {
+            padding: 1cm;
+            min-height: calc(100vh - 2cm);
+        }
+        
+        /* Print-specific styles */
+        @media print {
             body {
-                font-family: 'Times New Roman', Times, serif;
-                font-size: 12pt;
-                line-height: 1.6;
-                color: #333;
-                max-width: none;
-                margin: 0;
-                padding: 0;
-                background: white;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
-            
-            .pdf-content {
-                padding: 1cm;
-                min-height: calc(100vh - 2cm);
-            }
-            
-            h1, h2, h3, h4, h5, h6 {
-                color: #2c3e50;
-                margin-top: 1.5em;
-                margin-bottom: 0.5em;
-                page-break-after: avoid;
-                font-weight: bold;
-            }
-            
-            h1 {
-                font-size: 24pt;
-                border-bottom: 2px solid #3498db;
-                padding-bottom: 0.3em;
-            }
-            
-            h2 {
-                font-size: 20pt;
-                border-bottom: 1px solid #bdc3c7;
-                padding-bottom: 0.2em;
-            }
-            
-            h3 {
-                font-size: 16pt;
-            }
-            
-            h4 {
-                font-size: 14pt;
-            }
-            
-            h5, h6 {
-                font-size: 12pt;
-            }
-            
-            p {
-                margin: 0.8em 0;
-                text-align: justify;
-                orphans: 2;
-                widows: 2;
-            }
-            
-            ul, ol {
-                margin: 1em 0;
-                padding-left: 2em;
-            }
-            
-            li {
-                margin: 0.3em 0;
-                page-break-inside: avoid;
-            }
-            
-            blockquote {
-                margin: 1em 2em;
-                padding: 0.5em 1em;
-                border-left: 4px solid #3498db;
-                background-color: #f8f9fa;
-                font-style: italic;
-            }
-            
-            code {
-                font-family: 'Courier New', Courier, monospace;
-                background-color: #f1f2f6;
-                padding: 0.2em 0.4em;
-                border-radius: 3px;
-                font-size: 11pt;
-            }
-            
-            pre {
-                background-color: #f8f9fa;
-                border: 1px solid #e9ecef;
-                border-radius: 4px;
-                padding: 1em;
-                overflow-x: auto;
-                page-break-inside: avoid;
-            }
-            
-            pre code {
-                background: none;
-                padding: 0;
-            }
-            
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin: 1em 0;
-                page-break-inside: avoid;
-            }
-            
-            th, td {
-                border: 1px solid #ddd;
-                padding: 0.5em;
-                text-align: left;
-            }
-            
-            th {
-                background-color: #f2f2f2;
-                font-weight: bold;
-            }
-            
-            img {
-                max-width: 100%;
-                height: auto;
-                page-break-inside: avoid;
-            }
-            
-            .page-break {
-                page-break-before: always;
-            }
-            
-            .no-break {
-                page-break-inside: avoid;
-            }
-            
-            /* Print-specific styles */
-            @media print {
-                body {
-                    -webkit-print-color-adjust: exact;
-                    print-color-adjust: exact;
-                }
-            }
+        }
+        """
+        
+        # Combine the unified CSS with Playwright-specific rules
+        pdf_css = f"""
+        <style>
+            {css_content}
+            {playwright_page_css}
         </style>
         """
+        
+        # Format document with proper title placement and cover page if needed
+        if title:
+            metadata = {"date": datetime.now().strftime("%B %d, %Y")}
+            html_content = self.document_formatter.format_document(html_content, title, metadata)
         
         # Wrap content in a proper HTML structure if it's not already
         if not html_content.strip().lower().startswith('<!doctype') and not html_content.strip().lower().startswith('<html'):
@@ -643,6 +549,38 @@ class PDFGenerator:
             <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
         </div>
         """
+        
+    async def generate_pdf_with_cover_page(self, html_content: str, title: str, metadata: Optional[Dict] = None) -> bytes:
+        """
+        Generate PDF with a cover page
+        
+        Args:
+            html_content: The HTML content for the document body
+            title: Title for the cover page and document
+            metadata: Optional metadata dictionary for the cover page
+            
+        Returns:
+            bytes: The generated PDF as bytes
+        """
+        # Use the document formatter to handle cover page generation
+        if metadata is None:
+            metadata = {"date": datetime.now().strftime("%B %d, %Y")}
+        
+        # Save the current cover page mode
+        original_mode = self.document_formatter.cover_page_mode
+        
+        try:
+            # Force full cover page mode for this operation
+            self.document_formatter.cover_page_mode = 'full'
+            
+            # Format the document with cover page
+            formatted_html = self.document_formatter.format_document(html_content, title, metadata)
+            
+            # Generate PDF with formatted content
+            return await self.generate_pdf_from_html(formatted_html, title)
+        finally:
+            # Restore original cover page mode
+            self.document_formatter.cover_page_mode = original_mode
 
 
 def sanitize_filename(filename: str, max_length: int = 100) -> str:

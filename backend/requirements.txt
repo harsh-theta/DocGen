@@ -16,6 +16,7 @@ bleach
 psutil
 pytest
 pytest-asyncio
+weasyprint>=60.0
 # AI and LangGraph dependencies
 langgraph>=0.0.40
 langchain-google-genai>=1.0.0

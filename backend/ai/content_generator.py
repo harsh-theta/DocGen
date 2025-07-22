@@ -4,6 +4,7 @@ import logging
 from typing import List, Dict, Any, Optional
 from backend.core.config import settings
 from backend.ai.models import DocumentSection, GeneratedSection, ProjectContext, ValidationStatus
+from backend.ai.project_analyzer import ProjectContextAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -23,16 +24,52 @@ class ContentGenerator:
     def build_prompt(self, section: DocumentSection, context: ProjectContext) -> str:
         """
         Build a prompt for the LLM for a given section and project context.
+        Includes project analysis instructions to generate custom values instead of copying reference data.
         Explicitly request valid HTML output only.
         """
+        # Analyze project context to get project-specific metrics
+        project_metrics = ProjectContextAnalyzer.analyze_project_scope(context)
+        
+        # Check if section contains tables that might need custom values
+        contains_tables = "<table" in section.html_content
+        
         base = (
             f"Rewrite the following document section using the new project context.\n\n"
             f"Original:\n{section.html_content}\n\n"
             f"Context:\nProject name: {context.project_name}\nProject description: {context.project_description}\n"
             f"User prompt:\n{context.prompt_text}\n"
         )
+        
+        # Add project metrics to help generate custom values
+        base += (
+            f"\nProject Analysis:\n"
+            f"- Complexity Score: {project_metrics.complexity_score:.2f}\n"
+            f"- Estimated Total Hours: {project_metrics.estimated_hours.get('total', 0)}\n"
+            f"- Project Duration: {project_metrics.timeline_breakdown.get('duration', 'Unknown')}\n"
+            f"- Required Resources: {', '.join(project_metrics.resource_requirements)}\n"
+        )
+        
+        # Add specific instructions for tables and timelines
+        if contains_tables:
+            base += (
+                f"\nTable Generation Instructions:\n"
+                f"- DO NOT copy values from the original table\n"
+                f"- Generate new, realistic values specific to this project\n"
+                f"- Use the project metrics above to inform your values\n"
+                f"- For timelines, use these phase timelines: {project_metrics.timeline_breakdown}\n"
+                f"- For hour estimates, use these values: {project_metrics.estimated_hours}\n"
+                f"- Maintain the same table structure but with project-specific data\n"
+            )
+        
+        # Add any custom values that should be used
+        if project_metrics.custom_values:
+            base += f"\nCustom Values to Use:\n"
+            for key, value in project_metrics.custom_values.items():
+                base += f"- {key}: {value}\n"
+        
         if context.json_overrides:
-            base += f"Overrides:\n{context.json_overrides}\n"
+            base += f"\nOverrides:\n{context.json_overrides}\n"
+        
         # Explicitly request valid HTML only
         base += ("\nReturn the result as valid HTML only. Do not use Markdown, do not use triple backticks, do not prefix with 'html'. ")
         base += ("If you need to use headings, use <h1>, <h2>, etc. If you need lists, use <ul>/<ol> and <li>. ")
@@ -54,10 +91,30 @@ class ContentGenerator:
         output = output.replace("`", "")
         return output.strip()
 
+    def validate_generated_content(self, section: DocumentSection, generated_html: str, context: ProjectContext) -> tuple[bool, Optional[str]]:
+        """
+        Validate that generated content is project-relevant and not copying reference data.
+        
+        Args:
+            section: Original document section
+            generated_html: Generated HTML content
+            context: Project context
+            
+        Returns:
+            Tuple of (is_valid, error_message)
+        """
+        # Use ProjectContextAnalyzer to validate content
+        return ProjectContextAnalyzer.validate_generated_content(
+            section.html_content, 
+            generated_html, 
+            context
+        )
+    
     async def generate_section(self, section: DocumentSection, context: ProjectContext) -> GeneratedSection:
         """
         Generate content for a single section using Gemini LLM.
         Returns a GeneratedSection with result or error.
+        Includes validation to ensure project relevance.
         """
         prompt = self.build_prompt(section, context)
         # Use Gemini API key header
@@ -80,16 +137,32 @@ class ContentGenerator:
                             if response_text:
                                 # Post-process output
                                 response_text = self.postprocess_output(response_text)
-                                logger.info(f"Generated section {section.id} successfully.")
-                                return GeneratedSection(
-                                    section_id=section.id,
-                                    original_html=section.html_content,
-                                    generated_html=response_text,
-                                    generation_metadata={"model": self.model, "status_code": resp.status_code},
-                                    validation_status=ValidationStatus.PENDING,
-                                    error_message=None,
-                                    generation_time_ms=int((time.time() - start_time) * 1000)
-                                )
+                                
+                                # Validate the generated content
+                                is_valid, validation_error = self.validate_generated_content(section, response_text, context)
+                                
+                                validation_status = ValidationStatus.VALID if is_valid else ValidationStatus.INVALID
+                                
+                                # If content is valid or we've reached max retries, return the result
+                                if is_valid or retries >= self.max_retries - 1:
+                                    logger.info(f"Generated section {section.id} successfully. Validation: {validation_status}")
+                                    return GeneratedSection(
+                                        section_id=section.id,
+                                        original_html=section.html_content,
+                                        generated_html=response_text,
+                                        generation_metadata={
+                                            "model": self.model, 
+                                            "status_code": resp.status_code,
+                                            "validation_result": is_valid
+                                        },
+                                        validation_status=validation_status,
+                                        error_message=validation_error,
+                                        generation_time_ms=int((time.time() - start_time) * 1000)
+                                    )
+                                else:
+                                    # If content is invalid and we have retries left, try again
+                                    error_message = f"Content validation failed: {validation_error}"
+                                    logger.warning(f"Section {section.id} validation failed: {validation_error}. Retrying.")
                             else:
                                 error_message = "Empty response from Gemini API."
                         else:

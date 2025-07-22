@@ -1,0 +1,125 @@
+/* 
+ * Export Templates CSS
+ * Shared styling for PDF and DOCX exports
+ */
+
+@font-face {
+    font-family: 'Inter';
+    src: url('../fonts/Inter-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('../fonts/Inter-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('../fonts/Inter-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    margin: 25mm 25mm 25mm 25mm;
+    color: #333333;
+}
+
+/* Heading Hierarchy */
+h1 { font-size: 24pt; margin-top: 24pt; margin-bottom: 12pt; }
+h2 { font-size: 20pt; margin-top: 20pt; margin-bottom: 10pt; }
+h3 { font-size: 16pt; margin-top: 16pt; margin-bottom: 8pt; }
+h4 { font-size: 14pt; margin-top: 14pt; margin-bottom: 7pt; }
+h5 { font-size: 13pt; margin-top: 12pt; margin-bottom: 6pt; }
+h6 { font-size: 12pt; margin-top: 12pt; margin-bottom: 6pt; }
+
+/* Paragraph styling */
+p {
+    margin-top: 0;
+    margin-bottom: 10pt;
+}
+
+/* List styling */
+ul, ol {
+    margin-bottom: 10pt;
+    padding-left: 20pt;
+}
+
+li {
+    margin-bottom: 5pt;
+}
+
+/* Table styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15pt;
+    border: 1px solid #dddddd;
+}
+
+th {
+    background-color: #f3f3f3;
+    text-align: left;
+    padding: 8px;
+    border: 1px solid #dddddd;
+    font-weight: bold;
+}
+
+td {
+    padding: 8px;
+    border: 1px solid #dddddd;
+    text-align: left;
+}
+
+/* Image styling */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Page break control */
+.page-break {
+    page-break-after: always;
+}
+
+/* Links */
+a {
+    color: #0066cc;
+    text-decoration: underline;
+}
+
+/* Code blocks */
+pre, code {
+    font-family: 'Courier New', monospace;
+    background-color: #f5f5f5;
+    padding: 2pt;
+    border-radius: 3pt;
+}
+
+pre {
+    padding: 8pt;
+    overflow-x: auto;
+    margin-bottom: 10pt;
+}
+
+/* Blockquote */
+blockquote {
+    margin-left: 20pt;
+    padding-left: 10pt;
+    border-left: 3pt solid #dddddd;
+    color: #666666;
+}
+
+/* Horizontal rule */
+hr {
+    border: none;
+    border-top: 1px solid #dddddd;
+    margin: 15pt 0;
+}

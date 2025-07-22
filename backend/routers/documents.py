@@ -445,51 +445,241 @@ async def export_docx(id: str, request: Request, db: AsyncSession = Depends(get_
         row = result.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Document not found")
+        
         content = row.ai_content or "<p>No content available</p>"
         document_title = getattr(row, 'title', None) or row.name or 'Document'
+        
+        # Get export formatting manager for consistent styling
+        from backend.services.export_manager import ExportFormatManager
+        export_manager = ExportFormatManager()
+        docx_style = export_manager.get_docx_style_dict()
+        
+        # Apply consistent table styling to HTML content
+        content = export_manager.apply_consistent_table_styling(content)
+        
+        # Parse HTML content
         h = BeautifulSoup(content, "html.parser")
+        
+        # Create DOCX document
         docx_buffer = io.BytesIO()
         doc = DocxDocument()
-        # Set default font to Arial
+        
+        # Set default font
         style = doc.styles['Normal']
         font = style.font
-        font.name = 'Arial'
-        font.size = None  # Use default size
+        font.name = docx_style['font_family']
+        
+        # Add document title
         doc.add_heading(document_title, 0)
-        for el in h.find_all(["h1", "h2", "h3", "h4", "h5", "h6", "p", "ul", "ol", "li"]):
-            if el.name == "h1":
-                doc.add_heading(el.get_text(strip=True), level=1)
-            elif el.name == "h2":
-                doc.add_heading(el.get_text(strip=True), level=2)
-            elif el.name == "h3":
-                doc.add_heading(el.get_text(strip=True), level=3)
-            elif el.name == "h4":
-                doc.add_heading(el.get_text(strip=True), level=4)
-            elif el.name == "h5":
-                doc.add_heading(el.get_text(strip=True), level=5)
-            elif el.name == "h6":
-                doc.add_heading(el.get_text(strip=True), level=6)
+        
+        # Process HTML elements
+        elements = h.body.find_all(recursive=False) if h.body else h.find_all(recursive=False)
+        
+        # Track if we're inside a list to handle nested elements
+        in_list = False
+        current_list = None
+        list_style = None
+        
+        for el in elements:
+            # Process element based on its type
+            if el.name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
+                level = int(el.name[1])
+                doc.add_heading(el.get_text(strip=True), level=level)
+                
             elif el.name == "p":
-                doc.add_paragraph(el.get_text(strip=True))
+                # Handle paragraphs with potential formatting
+                p = doc.add_paragraph()
+                
+                # Process inline formatting
+                for child in el.children:
+                    if child.name == "b" or child.name == "strong":
+                        p.add_run(child.get_text(strip=True)).bold = True
+                    elif child.name == "i" or child.name == "em":
+                        p.add_run(child.get_text(strip=True)).italic = True
+                    elif child.name == "u":
+                        p.add_run(child.get_text(strip=True)).underline = True
+                    elif child.name == "a":
+                        p.add_run(child.get_text(strip=True)).underline = True
+                    elif child.name:
+                        # Other formatted elements
+                        p.add_run(child.get_text(strip=True))
+                    else:
+                        # Plain text
+                        if child.string and child.string.strip():
+                            p.add_run(child.string)
+                
+                # If paragraph was empty or only had whitespace, add the full text
+                if not p.runs:
+                    p.add_run(el.get_text(strip=True))
+                    
+            elif el.name == "table":
+                # Handle tables
+                rows = el.find_all("tr")
+                if not rows:
+                    continue
+                
+                # Count columns based on the first row
+                first_row = rows[0]
+                header_cells = first_row.find_all(["th", "td"])
+                col_count = len(header_cells)
+                
+                if col_count == 0:
+                    continue
+                
+                # Create table with appropriate dimensions
+                table = doc.add_table(rows=0, cols=col_count)
+                table.style = 'Table Grid'
+                
+                # Process header row if it contains th elements
+                has_header = any(cell.name == "th" for cell in header_cells)
+                
+                if has_header:
+                    header_row = table.add_row()
+                    for i, cell in enumerate(header_cells):
+                        if i < col_count:  # Ensure we don't exceed column count
+                            header_cell = header_row.cells[i]
+                            # Apply header formatting
+                            header_text = cell.get_text(strip=True)
+                            header_cell.text = header_text
+                            # Make header bold
+                            for paragraph in header_cell.paragraphs:
+                                for run in paragraph.runs:
+                                    run.bold = True
+                
+                # Process data rows
+                start_idx = 1 if has_header else 0
+                for row_idx in range(start_idx, len(rows)):
+                    tr = rows[row_idx]
+                    cells = tr.find_all(["td", "th"])
+                    if cells:
+                        table_row = table.add_row()
+                        for i, cell in enumerate(cells):
+                            if i < col_count:  # Ensure we don't exceed column count
+                                table_cell = table_row.cells[i]
+                                
+                                # Handle cell content with formatting
+                                cell_content = ""
+                                
+                                # Process cell content with potential formatting
+                                for child in cell.children:
+                                    if hasattr(child, 'name') and child.name in ["p", "div"]:
+                                        # Handle paragraphs within cells
+                                        if table_cell.paragraphs:
+                                            p = table_cell.paragraphs[0]
+                                        else:
+                                            p = table_cell.add_paragraph()
+                                            
+                                        # Process inline formatting
+                                        for subchild in child.children:
+                                            if hasattr(subchild, 'name'):
+                                                if subchild.name in ["b", "strong"]:
+                                                    p.add_run(subchild.get_text(strip=True)).bold = True
+                                                elif subchild.name in ["i", "em"]:
+                                                    p.add_run(subchild.get_text(strip=True)).italic = True
+                                                elif subchild.name == "u":
+                                                    p.add_run(subchild.get_text(strip=True)).underline = True
+                                                else:
+                                                    p.add_run(subchild.get_text(strip=True))
+                                            elif subchild.string and subchild.string.strip():
+                                                p.add_run(subchild.string)
+                                    elif hasattr(child, 'name') and child.name in ["b", "strong"]:
+                                        if not table_cell.paragraphs:
+                                            p = table_cell.add_paragraph()
+                                        else:
+                                            p = table_cell.paragraphs[0]
+                                        p.add_run(child.get_text(strip=True)).bold = True
+                                    elif hasattr(child, 'name') and child.name in ["i", "em"]:
+                                        if not table_cell.paragraphs:
+                                            p = table_cell.add_paragraph()
+                                        else:
+                                            p = table_cell.paragraphs[0]
+                                        p.add_run(child.get_text(strip=True)).italic = True
+                                    elif hasattr(child, 'name') and child.name == "u":
+                                        if not table_cell.paragraphs:
+                                            p = table_cell.add_paragraph()
+                                        else:
+                                            p = table_cell.paragraphs[0]
+                                        p.add_run(child.get_text(strip=True)).underline = True
+                                    elif hasattr(child, 'name') and child.name:
+                                        # Other formatted elements
+                                        if not table_cell.paragraphs:
+                                            p = table_cell.add_paragraph()
+                                        else:
+                                            p = table_cell.paragraphs[0]
+                                        p.add_run(child.get_text(strip=True))
+                                    elif child.string and child.string.strip():
+                                        # Plain text
+                                        if not table_cell.paragraphs:
+                                            p = table_cell.add_paragraph()
+                                        else:
+                                            p = table_cell.paragraphs[0]
+                                        p.add_run(child.string)
+                                
+                                # If cell was empty or only had whitespace, add the full text
+                                if not table_cell.paragraphs or not table_cell.paragraphs[0].runs:
+                                    table_cell.text = cell.get_text(strip=True)
+                
+                # Set table width to 100% of page width
+                table.autofit = False
+                for cell in table.columns[0].cells:
+                    cell.width = Inches(6.5)  # Adjust based on page margins
+                
             elif el.name in ["ul", "ol"]:
-                for li in el.find_all("li"):
-                    doc.add_paragraph(li.get_text(strip=True), style="List Bullet" if el.name == "ul" else "List Number")
+                # Handle lists
+                for li in el.find_all("li", recursive=False):
+                    list_style = "List Bullet" if el.name == "ul" else "List Number"
+                    p = doc.add_paragraph(style=list_style)
+                    
+                    # Process inline formatting in list items
+                    for child in li.children:
+                        if hasattr(child, 'name'):
+                            if child.name in ["b", "strong"]:
+                                p.add_run(child.get_text(strip=True)).bold = True
+                            elif child.name in ["i", "em"]:
+                                p.add_run(child.get_text(strip=True)).italic = True
+                            elif child.name == "u":
+                                p.add_run(child.get_text(strip=True)).underline = True
+                            elif child.name:
+                                # Other formatted elements
+                                p.add_run(child.get_text(strip=True))
+                        elif child.string and child.string.strip():
+                            # Plain text
+                            p.add_run(child.string)
+                    
+                    # If list item was empty or only had whitespace, add the full text
+                    if not p.runs:
+                        p.add_run(li.get_text(strip=True))
+                    
+                    # Handle nested lists (simplified approach)
+                    nested_lists = li.find_all(["ul", "ol"], recursive=False)
+                    for nested_list in nested_lists:
+                        for nested_li in nested_list.find_all("li", recursive=False):
+                            nested_style = "List Bullet 2" if nested_list.name == "ul" else "List Number 2"
+                            np = doc.add_paragraph(nested_li.get_text(strip=True), style=nested_style)
+        
+        # Save document to buffer
         doc.save(docx_buffer)
         docx_buffer.seek(0)
+        
+        # Upload to storage
         supabase = request.app.state.supabase
         bucket = settings.SUPABASE_BUCKET
         safe_filename = re.sub(r'[^A-Za-z0-9._-]', '_', document_title)
         filename = f"{safe_filename}_{id}_{uuid.uuid4().hex}.docx"
+        
         try:
             supabase.storage.from_(bucket).upload(filename, docx_buffer.read())
             public_url = supabase.storage.from_(bucket).get_public_url(filename)
         except Exception as e:
             logger.error(f"[DOCX Export] DOCX upload failed: {e}")
             raise HTTPException(status_code=500, detail=f"DOCX upload failed: {e}")
+            
+        # Update document record with export URL
         await db.execute(
             Document.__table__.update().where(Document.id == id).where(Document.user_id == user_id).values(final_file_url=public_url)
         )
         await db.commit()
+        
         return {"url": public_url}
     except Exception as e:
         logger.error(f"[DOCX Export] Error: {e}")

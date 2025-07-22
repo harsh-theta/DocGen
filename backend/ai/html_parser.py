@@ -48,120 +48,552 @@ class HTMLSectionParser:
  
     def parse_template(self, html: str) -> List[DocumentSection]:
         """
-        Parse an HTML template into a list of logical document sections.
-        - Each <h2> and its following content up to the next <h2> (or end of doc) is a section.
-        - Each table is its own section.
-        - Content before the first <h2> is a single section.
+        Parse an HTML template into a list of logical document sections with intelligent grouping.
+        
+        This improved version:
+        - Groups related content intelligently to reduce fragmentation
+        - Preserves semantic relationships between headings and their content
+        - Avoids creating excessive micro-sections
+        - Maintains document structure while creating meaningful sections
         """
         if not html or not html.strip():
             return []
+            
         soup = BeautifulSoup(html, 'html.parser')
         self._soup = soup
-        sections = []
-        order_index = 0
-        # Find all h2s and tables
-        all_h2s = soup.find_all('h2')
-        all_tables = soup.find_all('table')
-        # Mark table positions
-        table_ids = {id(table): table for table in all_tables}
-        # Section: content before first <h2>
-        first_h2 = all_h2s[0] if all_h2s else None
-        if first_h2:
-            pre_h2_content = []
-            for el in soup.body.contents if soup.body else soup.contents:
-                if el == first_h2:
-                    break
-                if getattr(el, 'name', None) or str(el).strip():
-                    pre_h2_content.append(str(el))
-            if pre_h2_content:
-                html_content = ''.join(pre_h2_content)
-                metadata = self.extract_section_metadata(html_content, SectionType.PARAGRAPH)
-                section = DocumentSection(
-                    id=str(uuid.uuid4()),
-                    html_content=html_content,
-                    section_type=SectionType.PARAGRAPH,
-                    metadata=metadata,
-                    parent_id=None,
-                    children=[],
-                    order_index=order_index
-                )
-                sections.append(section)
-                order_index += 1
-        # Section: each <h2> and its following content up to next <h2>
-        for idx, h2 in enumerate(all_h2s):
-            section_content = [str(h2)]
-            next_h2 = all_h2s[idx + 1] if idx + 1 < len(all_h2s) else None
-            el = h2.next_sibling
-            while el and el != next_h2:
-                # If this is a table, make it its own section
-                if getattr(el, 'name', None) == 'table':
-                    # Add current section if it has content
-                    if section_content:
-                        html_content = ''.join(section_content)
-                        metadata = self.extract_section_metadata(html_content, SectionType.PARAGRAPH)
-                        section = DocumentSection(
-                            id=str(uuid.uuid4()),
-                            html_content=html_content,
-                            section_type=SectionType.PARAGRAPH,
-                            metadata=metadata,
-                            parent_id=None,
-                            children=[],
-                            order_index=order_index
-                        )
-                        sections.append(section)
-                        order_index += 1
-                        section_content = []
-                    # Add table as its own section
-                    html_content = str(el)
-                    metadata = self.extract_section_metadata(html_content, SectionType.TABLE)
-                    section = DocumentSection(
-                        id=str(uuid.uuid4()),
-                        html_content=html_content,
-                        section_type=SectionType.TABLE,
-                        metadata=metadata,
-                        parent_id=None,
-                        children=[],
-                        order_index=order_index
-                    )
-                    sections.append(section)
-                    order_index += 1
-                else:
-                    if getattr(el, 'name', None) or str(el).strip():
-                        section_content.append(str(el))
-                el = el.next_sibling
-            # Add the last section for this h2
-            if section_content:
-                html_content = ''.join(section_content)
-                metadata = self.extract_section_metadata(html_content, SectionType.PARAGRAPH)
-                section = DocumentSection(
-                    id=str(uuid.uuid4()),
-                    html_content=html_content,
-                    section_type=SectionType.PARAGRAPH,
-                    metadata=metadata,
-                    parent_id=None,
-                    children=[],
-                    order_index=order_index
-                )
-                sections.append(section)
-                order_index += 1
-        # Section: any tables not already added
-        for table in all_tables:
-            if not any(str(table) in s.html_content for s in sections):
-                html_content = str(table)
-                metadata = self.extract_section_metadata(html_content, SectionType.TABLE)
-                section = DocumentSection(
-                    id=str(uuid.uuid4()),
-                    html_content=html_content,
-                    section_type=SectionType.TABLE,
-                    metadata=metadata,
-                    parent_id=None,
-                    children=[],
-                    order_index=order_index
-                )
-                sections.append(section)
-                order_index += 1
+        
+        # Clean the HTML first
+        self._clean_html(soup)
+        
+        # Use improved parsing that balances fragmentation reduction with test compatibility
+        sections = self._parse_with_intelligent_grouping(soup)
+        
+        # Establish hierarchy between sections
+        self._establish_section_hierarchy(sections)
+        
         logger.info(f"Parsed HTML into {len(sections)} logical sections")
         return sections
+
+    def _parse_with_intelligent_grouping(self, soup: BeautifulSoup) -> List[DocumentSection]:
+        """
+        Parse HTML with intelligent grouping that balances fragmentation reduction with expected behavior.
+        
+        This approach:
+        1. Identifies major headings as section boundaries
+        2. Groups content under headings with their immediate simple content
+        3. Treats complex elements (tables, lists, code) as separate sections
+        4. Combines adjacent simple paragraphs
+        """
+        sections = []
+        order_index = 0
+        
+        # Get the main content container
+        content_root = soup.body if soup.body else soup
+        if not content_root:
+            return sections
+        
+        # Find all headings to use as section boundaries
+        all_headings = []
+        for tag_name in self.heading_tags:
+            all_headings.extend(content_root.find_all(tag_name))
+        
+        # Sort headings by position in document
+        all_headings.sort(key=lambda x: self._get_element_position(soup, x))
+        
+        # If no headings, process content as groups
+        if not all_headings:
+            return self._group_content_without_headings(content_root, order_index)
+        
+        # Process content before first heading
+        first_heading = all_headings[0]
+        pre_heading_elements = []
+        
+        for element in content_root.children:
+            if element == first_heading:
+                break
+            if self._is_meaningful_element(element):
+                pre_heading_elements.append(element)
+        
+        if pre_heading_elements:
+            section = self._create_grouped_section(pre_heading_elements, order_index)
+            if section:
+                sections.append(section)
+                order_index += 1
+        
+        # Process each heading and its content
+        for i, heading in enumerate(all_headings):
+            next_heading = all_headings[i + 1] if i + 1 < len(all_headings) else None
+            
+            # Collect content for this heading section
+            heading_elements = [heading]
+            current = heading.next_sibling
+            
+            while current and current != next_heading:
+                if self._is_meaningful_element(current):
+                    # Check if this should be a separate section
+                    if self._should_be_standalone(current):
+                        # Create heading section with what we have so far
+                        if len(heading_elements) > 1 or heading_elements[0] != heading:
+                            section = self._create_grouped_section(heading_elements, order_index)
+                            if section:
+                                sections.append(section)
+                                order_index += 1
+                        
+                        # Create standalone section for complex element
+                        standalone_section = self._create_standalone_section(current, order_index)
+                        if standalone_section:
+                            sections.append(standalone_section)
+                            order_index += 1
+                        
+                        # Reset heading elements
+                        heading_elements = []
+                    else:
+                        heading_elements.append(current)
+                
+                current = current.next_sibling
+            
+            # Create section for remaining heading content
+            if heading_elements:
+                section = self._create_grouped_section(heading_elements, order_index)
+                if section:
+                    sections.append(section)
+                    order_index += 1
+        
+        return sections
+
+    def _create_grouped_section(self, elements: List, order_index: int) -> Optional[DocumentSection]:
+        """Create a section from a group of elements with intelligent typing."""
+        if not elements or not self._has_meaningful_content(elements):
+            return None
+        
+        # Determine section type based on first meaningful element
+        section_type = SectionType.PARAGRAPH
+        first_element = elements[0]
+        
+        if hasattr(first_element, 'name'):
+            if first_element.name in self.heading_tags:
+                section_type = SectionType.HEADING
+            elif first_element.name == 'table':
+                section_type = SectionType.TABLE
+            elif first_element.name in self.list_tags:
+                section_type = SectionType.LIST
+            elif first_element.name in self.code_tags:
+                section_type = SectionType.CODE_BLOCK
+        
+        return self._create_content_section(elements, section_type, order_index)
+
+    def _create_standalone_section(self, element, order_index: int) -> Optional[DocumentSection]:
+        """Create a standalone section for complex elements."""
+        if not hasattr(element, 'name'):
+            return None
+        
+        section_type = SectionType.PARAGRAPH
+        if element.name == 'table':
+            section_type = SectionType.TABLE
+        elif element.name in self.list_tags:
+            section_type = SectionType.LIST
+        elif element.name in self.code_tags:
+            section_type = SectionType.CODE_BLOCK
+        
+        return self._create_content_section([element], section_type, order_index)
+
+
+
+    def _find_major_headings(self, content_root: Tag) -> List[Tag]:
+        """
+        Find major headings that should serve as section boundaries.
+        
+        Prioritizes h1 and h2 tags, but will use h3 if no higher-level headings exist.
+        
+        Args:
+            content_root: The root element to search within
+            
+        Returns:
+            List of heading elements in document order
+        """
+        # Look for h1 and h2 first
+        major_headings = content_root.find_all(['h1', 'h2'])
+        
+        # If we have very few major headings, include h3 as well
+        if len(major_headings) <= 2:
+            h3_headings = content_root.find_all('h3')
+            major_headings.extend(h3_headings)
+        
+        # Sort by position in document
+        major_headings.sort(key=lambda x: self._get_element_position(content_root, x))
+        
+        return major_headings
+
+    def _find_standalone_elements(self, content_root: Tag) -> List[Tag]:
+        """
+        Find elements that should be treated as standalone sections.
+        
+        Args:
+            content_root: The root element to search within
+            
+        Returns:
+            List of standalone elements (tables, complex lists, etc.)
+        """
+        standalone = []
+        
+        # Tables are always standalone
+        standalone.extend(content_root.find_all('table'))
+        
+        # Complex lists (with nested structure or many items)
+        for list_elem in content_root.find_all(['ul', 'ol']):
+            if self._is_complex_list(list_elem):
+                standalone.append(list_elem)
+        
+        # Large code blocks
+        for code_elem in content_root.find_all(['pre', 'code']):
+            if self._is_large_code_block(code_elem):
+                standalone.append(code_elem)
+        
+        return standalone
+
+    def _group_content_without_headings(self, content_root: Tag, start_order: int) -> List[DocumentSection]:
+        """
+        Group content when no major headings are present.
+        
+        Args:
+            content_root: The root element containing the content
+            start_order: Starting order index for sections
+            
+        Returns:
+            List of DocumentSection objects
+        """
+        sections = []
+        order_index = start_order
+        
+        # Group content by type and adjacency
+        content_groups = self._group_elements_by_type(list(content_root.children))
+        
+        for group in content_groups:
+            if not group:
+                continue
+                
+            # Determine section type based on the group
+            section_type = self._determine_group_section_type(group)
+            
+            # Create section for this group
+            section = self._create_content_section(group, section_type, order_index)
+            if section:
+                sections.append(section)
+                order_index += 1
+        
+        return sections
+
+    def _group_heading_content(self, heading_content: List, start_order: int) -> List[DocumentSection]:
+        """
+        Group content under a heading, including the heading itself.
+        
+        Args:
+            heading_content: List of elements including the heading and its content
+            start_order: Starting order index for sections
+            
+        Returns:
+            List of DocumentSection objects
+        """
+        if not heading_content:
+            return []
+        
+        sections = []
+        order_index = start_order
+        
+        # The first element should be the heading
+        heading = heading_content[0]
+        remaining_content = heading_content[1:]
+        
+        # Check if we should create one large section or multiple sections
+        if self._should_group_as_single_section(heading, remaining_content):
+            # Create one section with heading and all content
+            section = self._create_content_section(heading_content, SectionType.HEADING, order_index)
+            if section:
+                sections.append(section)
+        else:
+            # Create heading section with immediate simple content
+            heading_with_simple_content = [heading]
+            complex_elements = []
+            
+            # Add a few simple elements to the heading section to reduce fragmentation
+            simple_count = 0
+            for elem in remaining_content:
+                if self._should_be_standalone(elem):
+                    complex_elements.append(elem)
+                elif (hasattr(elem, 'name') and elem.name in ['p', 'div', 'span'] and 
+                      simple_count < 2):  # Allow up to 2 simple elements with heading
+                    heading_with_simple_content.append(elem)
+                    simple_count += 1
+                else:
+                    complex_elements.append(elem)
+            
+            # Create heading section
+            heading_section = self._create_content_section(heading_with_simple_content, SectionType.HEADING, order_index)
+            if heading_section:
+                sections.append(heading_section)
+                order_index += 1
+            
+            # Process remaining elements as separate sections
+            content_groups = self._group_elements_by_type(complex_elements)
+            for group in content_groups:
+                if not group:
+                    continue
+                    
+                section_type = self._determine_group_section_type(group)
+                section = self._create_content_section(group, section_type, order_index)
+                if section:
+                    sections.append(section)
+                    order_index += 1
+        
+        return sections
+
+    def _group_elements_by_type(self, elements: List) -> List[List]:
+        """
+        Group adjacent elements of similar types together.
+        
+        Args:
+            elements: List of HTML elements
+            
+        Returns:
+            List of element groups
+        """
+        if not elements:
+            return []
+        
+        groups = []
+        current_group = []
+        current_type = None
+        
+        for element in elements:
+            if not self._is_meaningful_element(element):
+                continue
+                
+            element_type = self._get_element_grouping_type(element)
+            
+            # Start new group if type changes or element should be standalone
+            if (current_type != element_type or 
+                self._should_be_standalone(element) or
+                (current_group and self._should_break_group(current_group, element))):
+                
+                if current_group:
+                    groups.append(current_group)
+                current_group = [element]
+                current_type = element_type
+            else:
+                current_group.append(element)
+        
+        # Add the last group
+        if current_group:
+            groups.append(current_group)
+        
+        return groups
+
+    def _should_group_as_single_section(self, heading: Tag, content: List) -> bool:
+        """
+        Determine if a heading and its content should be grouped as a single section.
+        
+        Args:
+            heading: The heading element
+            content: List of content elements following the heading
+            
+        Returns:
+            True if they should be grouped together, False otherwise
+        """
+        # If there's very little content, group together
+        if len(content) <= 2:
+            return True
+        
+        # If content contains complex elements (tables, lists), don't group
+        for elem in content:
+            if hasattr(elem, 'name') and elem.name in ['table', 'ul', 'ol', 'pre', 'code']:
+                return False
+        
+        # If content is mostly simple paragraphs and small, group together
+        simple_elements = sum(1 for elem in content if self._is_simple_element(elem))
+        if len(content) <= 3 and simple_elements / len(content) > 0.7:
+            return True
+        
+        # If total content is very small, group together
+        total_text_length = sum(len(elem.get_text()) for elem in content if hasattr(elem, 'get_text'))
+        if total_text_length < 200:  # Less than 200 characters
+            return True
+        
+        return False
+
+    def _create_content_section(self, elements: List, section_type: SectionType, order_index: int) -> Optional[DocumentSection]:
+        """
+        Create a DocumentSection from a list of elements.
+        
+        Args:
+            elements: List of HTML elements to include in the section
+            section_type: Type of section to create
+            order_index: Order index for the section
+            
+        Returns:
+            DocumentSection object or None if no meaningful content
+        """
+        if not elements or not self._has_meaningful_content(elements):
+            return None
+        
+        # Convert elements to HTML string
+        html_content = ''.join(str(elem) for elem in elements if self._is_meaningful_element(elem))
+        
+        if not html_content.strip():
+            return None
+        
+        # Extract metadata
+        metadata = self.extract_section_metadata(html_content, section_type)
+        
+        # Create and return the section
+        return DocumentSection(
+            id=str(uuid.uuid4()),
+            html_content=html_content,
+            section_type=section_type,
+            metadata=metadata,
+            parent_id=None,
+            children=[],
+            order_index=order_index
+        )
+
+    def _has_meaningful_content(self, elements: List) -> bool:
+        """Check if a list of elements contains meaningful content."""
+        if not elements:
+            return False
+        
+        for element in elements:
+            if self._is_meaningful_element(element):
+                return True
+        
+        return False
+
+    def _is_meaningful_element(self, element) -> bool:
+        """Check if an element contains meaningful content."""
+        if isinstance(element, NavigableString):
+            return bool(element.strip())
+        
+        if not hasattr(element, 'name'):
+            return False
+        
+        # Skip empty elements
+        if not element.get_text().strip():
+            return False
+        
+        # Skip whitespace-only elements
+        if element.name in ['br', 'hr'] and not element.get_text().strip():
+            return False
+        
+        return True
+
+    def _get_element_grouping_type(self, element) -> str:
+        """Get the grouping type for an element."""
+        if not hasattr(element, 'name'):
+            return 'text'
+        
+        if element.name in self.heading_tags:
+            return 'heading'
+        elif element.name == 'table':
+            return 'table'
+        elif element.name in self.list_tags:
+            return 'list'
+        elif element.name in self.code_tags:
+            return 'code'
+        elif element.name in ['p', 'div', 'span']:
+            return 'paragraph'
+        else:
+            return 'other'
+
+    def _should_be_standalone(self, element) -> bool:
+        """Check if an element should be a standalone section."""
+        if not hasattr(element, 'name'):
+            return False
+        
+        # Tables are always standalone
+        if element.name == 'table':
+            return True
+        
+        # Complex lists are standalone
+        if element.name in self.list_tags and self._is_complex_list(element):
+            return True
+        
+        # Large code blocks are standalone
+        if element.name in self.code_tags and self._is_large_code_block(element):
+            return True
+        
+        return False
+
+    def _should_break_group(self, current_group: List, new_element) -> bool:
+        """Check if we should break the current group when adding a new element."""
+        # Break if group is getting too large
+        if len(current_group) > 5:
+            return True
+        
+        # Break if adding a complex element to simple content
+        if (len(current_group) > 0 and 
+            self._is_simple_element(current_group[0]) and 
+            not self._is_simple_element(new_element)):
+            return True
+        
+        return False
+
+    def _is_simple_element(self, element) -> bool:
+        """Check if an element is simple (paragraph, span, etc.)."""
+        if not hasattr(element, 'name'):
+            return True
+        
+        return element.name in ['p', 'span', 'div', 'br', 'strong', 'em', 'a']
+
+    def _is_complex_list(self, list_element: Tag) -> bool:
+        """Check if a list is complex enough to be a standalone section."""
+        # Count list items
+        items = list_element.find_all('li', recursive=False)
+        if len(items) > 5:
+            return True
+        
+        # Check for nested lists
+        nested_lists = list_element.find_all(['ul', 'ol'])
+        if len(nested_lists) > 1:  # More than just the current list
+            return True
+        
+        # Check for complex content in list items
+        for item in items:
+            if item.find_all(['p', 'div', 'table']):
+                return True
+        
+        return False
+
+    def _is_large_code_block(self, code_element: Tag) -> bool:
+        """Check if a code block is large enough to be a standalone section."""
+        text_content = code_element.get_text()
+        
+        # Consider it large if it has multiple lines or is long
+        return len(text_content.split('\n')) > 3 or len(text_content) > 200
+
+    def _determine_group_section_type(self, group: List) -> SectionType:
+        """Determine the appropriate section type for a group of elements."""
+        if not group:
+            return SectionType.PARAGRAPH
+        
+        # Check the first element to determine type
+        first_element = group[0]
+        
+        if hasattr(first_element, 'name'):
+            if first_element.name in self.heading_tags:
+                return SectionType.HEADING
+            elif first_element.name == 'table':
+                return SectionType.TABLE
+            elif first_element.name in self.list_tags:
+                return SectionType.LIST
+            elif first_element.name in self.code_tags:
+                return SectionType.CODE_BLOCK
+        
+        return SectionType.PARAGRAPH
+
+    def _find_element_position_in_children(self, element: Tag, children: List) -> int:
+        """Find the position of an element in a list of children."""
+        for i, child in enumerate(children):
+            if child is element:
+                return i
+        return -1
         
     def _extract_section_content(self, boundary: SectionBoundary) -> str:
         """
@@ -447,7 +879,7 @@ class HTMLSectionParser:
             soup: BeautifulSoup object to clean
         """
         # Remove comments
-        for comment in soup.find_all(text=lambda text: isinstance(text, Comment)):
+        for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
             comment.extract()
         
         # Remove script, style, and other unwanted tags
@@ -461,7 +893,7 @@ class HTMLSectionParser:
                 element.extract()
                 
         # Remove excessive whitespace in text nodes
-        for text in soup.find_all(text=True):
+        for text in soup.find_all(string=True):
             if isinstance(text, NavigableString) and not isinstance(text, Comment):
                 text.replace_with(re.sub(r'\s+', ' ', text.string))
                 

@@ -8,6 +8,8 @@ import { fetchWithAuth } from "@/lib/api";
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { TiptapTableExtension, TableMenu } from "@/components/TiptapTableExtension";
+import "@/styles/tiptap-table.css";
 
 const Preview = () => {
   const location = useLocation();
@@ -25,7 +27,7 @@ const Preview = () => {
   const errorTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [StarterKit, TiptapTableExtension],
     content: "",
     editable: true,
   });
@@ -422,163 +424,176 @@ const Preview = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto animate-fade-in">
+      <main className="container mx-auto px-4 py-8 max-w-none">
+        <div className="w-full animate-fade-in">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold mb-2">Document Preview</h2>
             <p className="text-muted-foreground">Review your generated document before exporting</p>
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-3">
-            {/* Document Info Sidebar */}
-            <div className="lg:col-span-1">
-              <Card className="shadow-medium border-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Eye className="h-5 w-5 text-primary" />
-                    <span>Document Info</span>
-                  </CardTitle>
-                  <CardDescription>Generated document details</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Title</Label>
-                    <p className="text-sm font-medium">{docMeta.documentTitle || "Untitled Document"}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Type</Label>
-                    <p className="text-sm">{docMeta.documentType || "Unknown Type"}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Source File</Label>
-                    <p className="text-sm flex items-center space-x-1">
-                      <File className="h-3 w-3" />
-                      <span>{docMeta.fileName || "No file"}</span>
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Prompt</Label>
-                    <p className="text-sm text-muted-foreground">{docMeta.prompt || "No prompt provided"}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-medium border-0 mt-4">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Download className="h-5 w-5 text-primary" />
-                    <span>Export Options</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="space-y-2">
-                    <Button 
-                      variant={exportErrors.pdf ? "destructive" : "outline"}
-                      onClick={() => handleExport("pdf")}
-                      className="w-full justify-start"
-                      disabled={downloading.pdf}
-                    >
-                      {downloading.pdf ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
-                          Exporting...
-                        </>
-                      ) : exportErrors.pdf ? (
-                        <>
-                          <AlertCircle className="h-4 w-4 mr-2" />
-                          Export Failed
-                        </>
-                      ) : (
-                        <>
-                          <Download className="h-4 w-4 mr-2" />
-                          Export as PDF
-                        </>
-                      )}
-                    </Button>
-                    {exportErrors.pdf && (
-                      <div className="text-xs text-destructive px-2 py-1 bg-destructive/10 rounded">
-                        {exportErrors.pdf}
-                        {(retryAttempts.pdf || 0) < 3 && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleExport("pdf", true)}
-                            className="ml-2 h-6 px-2 text-xs"
-                          >
-                            <RefreshCw className="h-3 w-3 mr-1" />
-                            Retry
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Button 
-                      variant={exportErrors.docx ? "destructive" : "default"}
-                      onClick={() => handleExport("docx")}
-                      className="w-full justify-start"
-                      disabled={downloading.docx}
-                    >
-                      {downloading.docx ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
-                          Exporting...
-                        </>
-                      ) : exportErrors.docx ? (
-                        <>
-                          <AlertCircle className="h-4 w-4 mr-2" />
-                          Export Failed
-                        </>
-                      ) : (
-                        <>
-                          <Download className="h-4 w-4 mr-2" />
-                          Export as DOCX
-                        </>
-                      )}
-                    </Button>
-                    {exportErrors.docx && (
-                      <div className="text-xs text-destructive px-2 py-1 bg-destructive/10 rounded">
-                        {exportErrors.docx}
-                        {(retryAttempts.docx || 0) < 3 && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleExport("docx", true)}
-                            className="ml-2 h-6 px-2 text-xs"
-                          >
-                            <RefreshCw className="h-3 w-3 mr-1" />
-                            Retry
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Document Preview */}
-            <div className="lg:col-span-2">
+          {/* Responsive layout: mobile stacked, tablet/desktop with sidebar */}
+          <div className="flex flex-col xl:flex-row gap-6">
+            {/* Document Preview - Main Content (80%+ width on large screens) */}
+            <div className="flex-1 xl:w-4/5 order-2 xl:order-1">
               <Card className="shadow-large border-0 min-h-[600px]">
-                <CardHeader>
-                  <CardTitle>Document Preview</CardTitle>
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg">Document Preview</CardTitle>
                   <CardDescription>Generated content based on your specifications</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="bg-background rounded-lg p-8 shadow-soft min-h-[500px] border">
-                    <div className="space-y-6">
-                      <div className="text-center border-b pb-4">
-                        <h1 className="text-2xl font-bold">{docMeta.documentTitle || "Generated Document"}</h1>
-                        <p className="text-muted-foreground">{docMeta.documentType || "Document Type"}</p>
+                <CardContent className="p-0">
+                  <div className="bg-background rounded-lg mx-6 mb-6 shadow-soft min-h-[500px] border">
+                    <div className="p-8 lg:p-12 space-y-8">
+                      <div className="text-center border-b pb-6">
+                        <h1 className="text-3xl lg:text-4xl font-bold leading-tight mb-3">
+                          {docMeta.documentTitle || "Generated Document"}
+                        </h1>
+                        <p className="text-muted-foreground text-lg">
+                          {docMeta.documentType || "Document Type"}
+                        </p>
                       </div>
-                      <div className="space-y-4">
-                        <EditorContent editor={editor} />
+                      <div className="max-w-none">
+                        <TableMenu editor={editor} />
+                        <EditorContent 
+                          editor={editor} 
+                          className="tiptap-editor"
+                        />
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Document Info Sidebar (20% width on large screens) */}
+            <div className="xl:w-1/5 xl:min-w-[280px] xl:max-w-[320px] order-1 xl:order-2">
+              <div className="space-y-4">
+                <Card className="shadow-medium border-0">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center space-x-2 text-base">
+                      <Eye className="h-4 w-4 text-primary" />
+                      <span>Document Info</span>
+                    </CardTitle>
+                    <CardDescription className="text-sm">Generated document details</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Title</Label>
+                      <p className="text-sm font-medium mt-1 leading-snug">{docMeta.documentTitle || "Untitled Document"}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Type</Label>
+                      <p className="text-sm mt-1">{docMeta.documentType || "Unknown Type"}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Source File</Label>
+                      <p className="text-sm flex items-center space-x-1 mt-1">
+                        <File className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{docMeta.fileName || "No file"}</span>
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Prompt</Label>
+                      <p className="text-sm text-muted-foreground mt-1 leading-snug line-clamp-3">
+                        {docMeta.prompt || "No prompt provided"}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-medium border-0">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center space-x-2 text-base">
+                      <Download className="h-4 w-4 text-primary" />
+                      <span>Export Options</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2">
+                      <Button 
+                        variant={exportErrors.pdf ? "destructive" : "outline"}
+                        onClick={() => handleExport("pdf")}
+                        className="w-full justify-start text-sm h-9"
+                        disabled={downloading.pdf}
+                      >
+                        {downloading.pdf ? (
+                          <>
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-2" />
+                            Exporting...
+                          </>
+                        ) : exportErrors.pdf ? (
+                          <>
+                            <AlertCircle className="h-3 w-3 mr-2" />
+                            Export Failed
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-3 w-3 mr-2" />
+                            Export as PDF
+                          </>
+                        )}
+                      </Button>
+                      {exportErrors.pdf && (
+                        <div className="text-xs text-destructive px-2 py-1 bg-destructive/10 rounded leading-tight">
+                          {exportErrors.pdf}
+                          {(retryAttempts.pdf || 0) < 3 && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleExport("pdf", true)}
+                              className="ml-2 h-5 px-2 text-xs"
+                            >
+                              <RefreshCw className="h-2 w-2 mr-1" />
+                              Retry
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Button 
+                        variant={exportErrors.docx ? "destructive" : "default"}
+                        onClick={() => handleExport("docx")}
+                        className="w-full justify-start text-sm h-9"
+                        disabled={downloading.docx}
+                      >
+                        {downloading.docx ? (
+                          <>
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-2" />
+                            Exporting...
+                          </>
+                        ) : exportErrors.docx ? (
+                          <>
+                            <AlertCircle className="h-3 w-3 mr-2" />
+                            Export Failed
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-3 w-3 mr-2" />
+                            Export as DOCX
+                          </>
+                        )}
+                      </Button>
+                      {exportErrors.docx && (
+                        <div className="text-xs text-destructive px-2 py-1 bg-destructive/10 rounded leading-tight">
+                          {exportErrors.docx}
+                          {(retryAttempts.docx || 0) < 3 && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleExport("docx", true)}
+                              className="ml-2 h-5 px-2 text-xs"
+                            >
+                              <RefreshCw className="h-2 w-2 mr-1" />
+                              Retry
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </div>
